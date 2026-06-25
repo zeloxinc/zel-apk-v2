@@ -1,6 +1,8 @@
 import "../global.css"
 import { DarkTheme, DefaultTheme, ThemeProvider } from 'expo-router';
 
+import { PortalHost } from "@rn-primitives/portal";
+
 import { useColorScheme } from 'react-native';
 import { useFonts } from "expo-font";
 
@@ -31,6 +33,7 @@ export default function TabLayout() {
     <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
       <AnimatedSplashOverlay />
       <AppTabs />
+      <PortalHost />
     </ThemeProvider>
   );
 }
