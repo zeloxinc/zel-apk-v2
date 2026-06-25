@@ -16,3 +16,5 @@ export const NAV_THEME = {
     text: "#FFFFFF",
   },
 } as const;
+
+// TODO: Add some more custom themes 

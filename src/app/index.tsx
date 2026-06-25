@@ -8,9 +8,14 @@ export default function HomeScreen() {
   const { colorScheme, setColorScheme } = useColorScheme();
 
   return (
-    <View className="flex-1 items-center justify-center bg-background">
-      <Text className="text-foreground">
-        Current theme: {colorScheme}
+    <View className="flex-1 bg-white dark:bg-black items-center justify-center">
+      <Text className="text-black dark:text-white mb-4">
+        Theme: {colorScheme}
+      </Text>
+
+      <View className="h-20 w-20 bg-primary" />
+      <Text className="text-primary">
+        Primary
       </Text>
 
       <Button
