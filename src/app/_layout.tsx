@@ -16,6 +16,7 @@ import {
   BricolageGrotesque_700Bold,
 } from "@expo-google-fonts/bricolage-grotesque";
 import { GasoekOne_400Regular } from "@expo-google-fonts/gasoek-one";
+import { GestureHandlerRootView } from "react-native-gesture-handler";
 
 const lightThemeVars = vars({
   "--background": "0 0% 100%",
@@ -84,13 +85,15 @@ export default function RootLayout() {
   const activeVars = colorScheme === "dark" ? darkThemeVars : lightThemeVars;
 
   return (
-    <ThemeProvider value={colorScheme === "dark" ? DARK_THEME : LIGHT_THEME}>
- 
-      <View style={[activeVars, { flex: 1 }]}>
-        <StatusBar style={colorScheme === "dark" ? "light" : "dark"} />
-        <Stack screenOptions={{ headerShown: false }} />
-        <PortalHost />
-      </View>
-    </ThemeProvider>
+    <GestureHandlerRootView>
+      <ThemeProvider value={colorScheme === "dark" ? DARK_THEME : LIGHT_THEME}>
+   
+        <View style={[activeVars, { flex: 1 }]}>
+          <StatusBar style={colorScheme === "dark" ? "light" : "dark"} />
+          <Stack screenOptions={{ headerShown: false }} />
+          <PortalHost />
+        </View>
+      </ThemeProvider>
+    </GestureHandlerRootView>
   );
 }
