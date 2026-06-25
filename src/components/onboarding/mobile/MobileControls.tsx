@@ -25,6 +25,8 @@ export function MobileControls() {
 
   const router = useRouter();
 
+
+  // TODO: Change the path
   function handlePrimary() {
     if (isLastSlide) {
       completeOnboarding();

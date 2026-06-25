@@ -25,6 +25,7 @@ export function MobileOnboarding() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
 
+  // TODO: Change the path
   function handleSkip() {
     completeOnboarding();
     router.replace("/(auth)/sign-up");
