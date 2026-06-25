@@ -1,5 +1,6 @@
 import React from "react";
 import { View, Pressable, Text } from "react-native";
+import Ionicons from '@expo/vector-icons/Ionicons';
 import Animated, {
   FadeIn,
   FadeOut,
@@ -54,8 +55,12 @@ export function MobileControls() {
               accessibilityLabel="Previous slide"
               className="w-12 h-12 rounded-2xl border border-white/20 items-center justify-center active:scale-95"
             >
-              {/* Chevron left */}
-              <Text className="text-white/60 text-lg font-light">‹</Text>
+
+              <Ionicons
+                name="chevron-back"
+                size={15}
+                color="white"
+              />
             </Pressable>
           </Animated.View>
         )}

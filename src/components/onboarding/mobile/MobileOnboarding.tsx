@@ -76,7 +76,7 @@ export function MobileOnboarding() {
           colors={["transparent", "rgba(0,0,0,0.9)", "#000"]}
           style={{
             paddingHorizontal: 24,
-            // paddingBottom: insets.bottom + 24,
+            paddingBottom: insets.bottom - 18,
             paddingTop: 16,
           }}
         >
