@@ -1,9 +1,8 @@
-import "../global.css"
-import { DarkTheme, DefaultTheme, ThemeProvider } from 'expo-router';
+import "../global.css";
 
+import { Stack } from "expo-router";
 import { PortalHost } from "@rn-primitives/portal";
 
-import { useColorScheme } from 'react-native';
 import { useFonts } from "expo-font";
 
 import {
@@ -12,15 +11,9 @@ import {
   BricolageGrotesque_700Bold,
 } from "@expo-google-fonts/bricolage-grotesque";
 
-import {
-  GasoekOne_400Regular,
-} from "@expo-google-fonts/gasoek-one";
+import { GasoekOne_400Regular } from "@expo-google-fonts/gasoek-one";
 
-import { AnimatedSplashOverlay } from '@/components/animated-icon';
-import AppTabs from '@/components/app-tabs';
-
-export default function TabLayout() {
-  const colorScheme = useColorScheme();
+export default function RootLayout() {
   const [loaded] = useFonts({
     BricolageGrotesque_400Regular,
     BricolageGrotesque_500Medium,
@@ -29,11 +22,11 @@ export default function TabLayout() {
   });
 
   if (!loaded) return null;
+
   return (
-    <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
-      <AnimatedSplashOverlay />
-      <AppTabs />
+    <>
+      <Stack screenOptions={{ headerShown: false }} />
       <PortalHost />
-    </ThemeProvider>
+    </>
   );
 }
