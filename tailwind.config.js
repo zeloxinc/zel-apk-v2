@@ -7,7 +7,14 @@ module.exports = {
   ],
   presets: [require("nativewind/preset")],
   theme: {
-    extend: {},
+    extend: {
+      fontFamily: {
+             primary: ["BricolageGrotesque_400Regular"],
+             secondary: ["BricolageGrotesque_500Medium"],
+             heading: ["BricolageGrotesque_700Bold"],
+             zelox: ["GasoekOne_400Regular"],
+           },
+    },
   },
   plugins: [],
 };
