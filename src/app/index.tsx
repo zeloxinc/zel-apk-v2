@@ -2,7 +2,9 @@ import { View } from "react-native";
 import { Button } from "@/components/ui/button";
 import { Text } from "@/components/ui/text";
 
+
 import { useColorScheme } from "nativewind";
+import { router } from "expo-router";
 
 export default function HomeScreen() {
   const { colorScheme, setColorScheme } = useColorScheme();
@@ -18,6 +20,9 @@ export default function HomeScreen() {
         Primary
       </Text>
 
+      <Button onPress={() => router.push("/onboarding")}>
+        <Text>Start Onboarding</Text>
+      </Button>
       <Button
         onPress={() =>
           setColorScheme(
