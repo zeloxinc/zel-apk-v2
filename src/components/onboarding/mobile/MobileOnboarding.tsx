@@ -31,7 +31,6 @@ export function MobileOnboarding() {
     router.replace("/(auth)/sign-up");
   }
 
-  // Swipe gesture via RNGH
   const swipe = Gesture.Pan()
     .runOnJS(true)
     .onEnd((e) => {

@@ -12,6 +12,8 @@ import { useRouter } from "expo-router";
 import { ArrowLeft } from "lucide-react-native";
 import { Text } from "../ui/text";
 
+// TODO: Make the header sticky on scroll
+
 interface MobilePageHeaderProps {
   title: string;
   onBack?: () => void;
@@ -74,7 +76,7 @@ export function MobilePageHeader({
       style={[containerStyle, { paddingTop: insets.top }]}
     >
       <Animated.View
-        className="flex-row items-center gap-1 px-3"
+        className="flex-row items-center gap-1"
         style={[{ height: 52 }, rowStyle]}
       >
         <TouchableOpacity

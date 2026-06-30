@@ -11,6 +11,7 @@ import Animated, {
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Bell } from "lucide-react-native";
 import { BoringAvatar } from "../boring-avatar";
+import { Images } from "@/assets";
 
 interface MobileHomeHeaderProps {
   userName?: string;
@@ -124,7 +125,7 @@ export function MobileHomeHeader({
             >
               <Animated.View style={logoStyle} className="h-8 justify-center">
                 <Image
-                  source={require("@/assets/images/zelshop-wording-black.svg")}
+                  source={Images.zelWordBlack}
                   contentFit="contain"
                   className="w-full h-full"
                   style={{ width: 70, height: 40 }}
