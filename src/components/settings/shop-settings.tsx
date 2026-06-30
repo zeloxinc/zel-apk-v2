@@ -43,7 +43,6 @@ const MOCK_STAFF = [
 
 const MOCK_IS_ONLINE = true;
 
-// ── Helpers ───────────────────────────────────────────────────────────────────
 
 function getInitials(name: string) {
   return name.split(" ").map((w) => w[0]).slice(0, 2).join("").toUpperCase();
@@ -53,7 +52,6 @@ function nameHue(name: string) {
   return name.split("").reduce((acc, c) => acc + c.charCodeAt(0), 0) % 360;
 }
 
-// ── Field ─────────────────────────────────────────────────────────────────────
 
 interface FieldProps {
   label: string;
@@ -69,9 +67,7 @@ interface FieldProps {
 function Field({ label, value, onChange, placeholder, disabled, error, keyboardType = "default", prefix }: FieldProps) {
   const { colorScheme } = useColorScheme();
   const isDark = colorScheme === "dark";
-
-  // Explicit theme-aware colors — avoids relying on CSS vars that don't resolve
-  // in RN TextInput (which isn't a web element)
+  
   const inputTextColor     = isDark ? "#f9fafb" : "#111827";
   const placeholderColor   = isDark ? "#6b7280" : "#9ca3af";
   const borderColor        = error
@@ -111,6 +107,7 @@ function Field({ label, value, onChange, placeholder, disabled, error, keyboardT
             placeholder={placeholder}
             placeholderTextColor={placeholderColor}
             keyboardType={keyboardType}
+            className="font-primary"
             style={{ flex: 1, fontSize: 14, color: inputTextColor, paddingVertical: 0 }}
           />
         </View>
@@ -136,7 +133,6 @@ function Field({ label, value, onChange, placeholder, disabled, error, keyboardT
   );
 }
 
-// ── Section Header ─────────────────────────────────────────────────────────────
 
 function SectionHeading({ title, subtitle }: { title: string; subtitle?: string }) {
   return (
@@ -149,7 +145,6 @@ function SectionHeading({ title, subtitle }: { title: string; subtitle?: string 
   );
 }
 
-// ── Main Component ────────────────────────────────────────────────────────────
 
 export function ShopSettings() {
   const isOnline = MOCK_IS_ONLINE;
@@ -204,7 +199,6 @@ export function ShopSettings() {
       keyboardShouldPersistTaps="handled"
     >
 
-      {/* ── Offline Banner ── */}
       {!isOnline && (
         <View className="flex-row items-center gap-2.5 p-3.5 rounded-2xl bg-amber-50 dark:bg-amber-950 border border-amber-200 dark:border-amber-800 mb-5">
           <WifiOff size={16} color="#92400e" />
@@ -214,7 +208,6 @@ export function ShopSettings() {
         </View>
       )}
 
-      {/* ── Shop Identity ── */}
       <View
         style={{ backgroundColor: cardBg, borderColor: cardBorder, borderWidth: 1 }}
         className="flex-row items-center gap-3 p-4 rounded-2xl mb-6"
@@ -226,7 +219,6 @@ export function ShopSettings() {
         </View>
       </View>
 
-      {/* ── Shop Details Section ── */}
       <SectionHeading title="Shop Details" subtitle="Basic info shown on receipts and invoices." />
 
       <View className="gap-4 mb-6">
@@ -235,7 +227,6 @@ export function ShopSettings() {
         <Field label="Phone" value={phone} onChange={(t) => setPhone(t.replace(/\D/g, ""))} placeholder="712345678" keyboardType="phone-pad" disabled={!isOnline} error={!isPhoneValid} prefix="+254" />
       </View>
 
-      {/* ── Location Section ── */}
       <SectionHeading title="Location" subtitle="Physical address of your shop." />
 
       <View className="gap-4 mb-6">
@@ -276,7 +267,6 @@ export function ShopSettings() {
         <Text>Generate Invite Code</Text>
       </Button>
 
-      {/* ── Invite Code Card ── */}
       {inviteCode && (
         <View
           style={{ backgroundColor: mutedBg, borderColor: cardBorder, borderWidth: 1 }}
@@ -287,30 +277,33 @@ export function ShopSettings() {
           </Text>
 
           <View className="flex-row items-end justify-between">
-            <Text
-              style={{ letterSpacing: 10, fontSize: 28, fontWeight: "800" }}
-              className="text-foreground"
-            >
-              {inviteCode}
-            </Text>
-            <View className="items-end gap-1 pb-0.5">
-              <Text className="text-[10px] font-heading uppercase tracking-widest text-muted-foreground">
+            <View className="flex-row gap-2 items-end ">
+              <Text
+                className="text-foreground font-secondary text-3xl tracking-[5px]"
+              >
+                {inviteCode} 
+               
+              </Text>
+              {/*TODO: Hook up the copy functionality*/}
+                <Copy size={13} color={isDark ? "#a1a1aa" : "#6b7280"} />
+            </View>
+            <View className="items-end gap-1  bg-red-300  p-2 rounded">
+              <Text className="text-[10px] font-heading uppercase tracking-widest text-red-600">
                 Expires
               </Text>
-              <Text className="text-xs font-secondary text-muted-foreground">
+              {/*TODO: Include date in invite expiry*/}
+              {/*TODO: Make the expiry a coutdown*/}
+              {/*TODO: Persistantly store the invite code*/}
+              <Text className="text-xs font-secondary text-red-600">
                 {inviteExpiry
                   ? new Date(inviteExpiry).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })
                   : "24h"}
               </Text>
-              <View className="mt-1">
-                <Copy size={13} color={isDark ? "#a1a1aa" : "#6b7280"} />
-              </View>
             </View>
           </View>
         </View>
       )}
 
-      {/* ── Staff List ── */}
       <SectionHeading title="Team Members" subtitle={`${staffList.length} operator${staffList.length !== 1 ? "s" : ""} on this terminal.`} />
 
       <View

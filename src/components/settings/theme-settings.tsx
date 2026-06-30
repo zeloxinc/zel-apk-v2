@@ -14,7 +14,6 @@ type ThemeId = (typeof themes)[number]["id"];
 export function ThemeSettings() {
   const { colorScheme, setColorScheme } = useColorScheme();
 
-  // Map system color scheme to our selection (default to system)
   const [selected, setSelected] = React.useState<ThemeId>("system");
 
   const handleSelect = (id: ThemeId) => {
@@ -27,7 +26,7 @@ export function ThemeSettings() {
   };
 
   return (
-    <View className="bg-card rounded-2xl border border-border mx-4 mb-1">
+    <View className="bg-card rounded-2xl  mb-1">
       <View className="p-5 pb-4">
         <Text className="text-base font-bold text-foreground font-heading">
           Display Theme
@@ -53,7 +52,6 @@ export function ThemeSettings() {
                   : "bg-muted border-border"
               }`}
             >
-              {/* Icon ring */}
               <View
                 className={`w-10 h-10 rounded-full items-center justify-center ${
                   isActive ? "bg-primary-foreground/10" : "bg-background"
@@ -68,7 +66,7 @@ export function ThemeSettings() {
 
               <View className="items-center gap-0.5">
                 <Text
-                  className={`text-[13px] font-bold font-secondary ${
+                  className={`text-[13px] font-secondary ${
                     isActive ? "text-primary-foreground" : "text-foreground"
                   }`}
                 >
@@ -83,7 +81,6 @@ export function ThemeSettings() {
                 </Text>
               </View>
 
-              {/* Active dot indicator */}
               {isActive && (
                 <View className="w-1.5 h-1.5 rounded-full bg-primary-foreground/50" />
               )}

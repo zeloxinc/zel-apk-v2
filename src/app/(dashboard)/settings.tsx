@@ -81,7 +81,7 @@ function TabletLayout({
         <View className="px-5 pt-6 pb-4 border-b border-border">
           <Text className="text-xl font-bold text-foreground font-heading">Settings</Text>
           <Text className="text-xs text-muted-foreground font-primary mt-0.5">
-            Manage terminal configuration
+            Manage  configuration
           </Text>
         </View>
         <ScrollView className="flex-1 p-3">
@@ -133,7 +133,6 @@ function TabletLayout({
   );
 }
 
-// ── Main Screen ───────────────────────────────────────────────────────────────
 export default function SettingsScreen() {
   const { width } = useWindowDimensions();
   const isTablet = width >= 768;
@@ -155,10 +154,9 @@ export default function SettingsScreen() {
           contentContainerStyle={{ paddingHorizontal: 16, paddingTop: 20, paddingBottom: 120 }}
           showsVerticalScrollIndicator={false}
         >
-          {/* Profile header */}
           <View className="mb-7">
             <AvatarCircle name={MOCK_PROFILE.profile_full_name} size={60} />
-            <Text className="text-xl font-bold text-foreground font-heading mt-3">
+            <Text className="text-xl text-foreground font-heading mt-3">
               {MOCK_SHOP.shop_name}
             </Text>
             <Text className="text-xs font-medium text-muted-foreground font-primary mt-0.5">
