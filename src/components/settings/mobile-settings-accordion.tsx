@@ -53,7 +53,6 @@ function AccordionItem({ section }: { section: SettingSection }) {
 
   return (
     <View className="border border-border bg-card rounded-2xl overflow-hidden mb-3">
-      {/* ── Trigger row ── */}
       <Pressable
         onPress={toggle}
         android_ripple={{ color: isDark ? "#3f3f46" : "#f4f4f5" }}

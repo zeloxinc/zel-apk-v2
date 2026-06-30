@@ -243,7 +243,6 @@ export function ShopSettings() {
         <Field label="Currency" value="KES — Kenyan Shilling" onChange={() => {}} disabled />
       </View>
 
-      {/* ── Save ── */}
       <Button onPress={handleSave} disabled={!canSave} className="h-11 rounded-xl mb-2">
         {saving
           ? <ActivityIndicator color={isDark ? "#000000" : "#ffffff"} size="small" />
@@ -251,10 +250,8 @@ export function ShopSettings() {
         }
       </Button>
 
-      {/* ── Divider ── */}
       <Separator className="my-8" />
 
-      {/* ── Staff Onboarding ── */}
       <SectionHeading title="Staff Onboarding" subtitle="Generate a code for cashiers to join your shop." />
 
       <Button
@@ -321,7 +318,6 @@ export function ShopSettings() {
               style={!isLast ? { borderBottomWidth: 1, borderBottomColor: cardBorder } : undefined}
               className="flex-row items-center justify-between px-4 py-3.5"
             >
-              {/* Avatar + name */}
               <View className="flex-row items-center gap-3 flex-1 min-w-0">
                 <Avatar alt={member.profile_full_name} style={{ width: 38, height: 38 }}>
                   <AvatarFallback style={{ backgroundColor: `hsl(${hue}, 40%, ${isDark ? "30%" : "78%"})` }}>
@@ -341,7 +337,6 @@ export function ShopSettings() {
                 </View>
               </View>
 
-              {/* Badge + remove */}
               <View className="flex-row items-center gap-2.5 ml-2">
                 <Badge variant="secondary" className="rounded-lg px-2.5 py-1">
                   <Text className="text-[11px] font-heading">{member.role_name}</Text>
@@ -358,7 +353,9 @@ export function ShopSettings() {
                       <AlertDialogHeader>
                         <AlertDialogTitle>Remove staff member?</AlertDialogTitle>
                         <AlertDialogDescription>
-                          This will immediately end access for {member.profile_full_name}.
+                          This will immediately end access for <Text className="font-secondary underline">
+                            {member.profile_full_name}
+                          </Text>
                         </AlertDialogDescription>
                       </AlertDialogHeader>
                       <AlertDialogFooter>
