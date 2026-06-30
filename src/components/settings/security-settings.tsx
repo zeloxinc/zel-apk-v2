@@ -16,13 +16,15 @@ interface PinInputProps {
   onChange: (v: string) => void;
 }
 
+// TODO: Hook up the pin update functionalituy
+
 function PinInput({ label, value, onChange }: PinInputProps) {
   const inputRef = useRef<TextInput>(null);
-  const digits = value.padEnd(6, "").split("").slice(0, 6);
+  const digits = Array.from({ length: 6 }, (_, i) => value[i] ?? "");
 
   return (
     <View className="gap-2">
-      <Text className="text-[11px] font-bold uppercase tracking-widest text-muted-foreground font-secondary">
+      <Text className="text-[11px]  uppercase tracking-widest text-muted-foreground font-secondary">
         {label}
       </Text>
       <TouchableOpacity
@@ -30,24 +32,23 @@ function PinInput({ label, value, onChange }: PinInputProps) {
         onPress={() => inputRef.current?.focus()}
         className="flex-row gap-1.5"
       >
-        {digits.map((digit, i) => {
+        {digits.map((_, i) => {
           const isFilled = i < value.length;
           const isCurrent = i === value.length;
+        
           return (
             <View
               key={i}
               className={`w-10 h-12 rounded-xl border items-center justify-center ${
                 isCurrent
-                  ? "border-foreground bg-card"
-                  : isFilled
-                  ? "border-border bg-muted"
+                  ? "border-primary bg-muted"
                   : "border-border bg-muted"
               }`}
             >
               {isFilled ? (
                 <View className="w-2.5 h-2.5 rounded-full bg-foreground" />
               ) : (
-                <View className="w-1 h-1 rounded-full bg-muted-foreground opacity-30" />
+                <View className="w-1.5 h-1.5 rounded-full bg-muted-foreground/30" />
               )}
             </View>
           );
@@ -85,13 +86,10 @@ export function SecuritySettings() {
     <KeyboardAvoidingView
       behavior={Platform.OS === "ios" ? "padding" : undefined}
     >
-      <View className="bg-card rounded-2xl border border-border mx-4 mb-1">
+      <View className="bg-card rounded-2xl  mb-1">
         <View className="p-5 pb-3 flex-row items-start gap-3">
-          <View className="w-9 h-9 rounded-xl bg-muted border border-border items-center justify-center mt-0.5">
-            <ShieldCheck size={18} color="#6b7280" />
-          </View>
           <View className="flex-1">
-            <Text className="text-base font-bold text-foreground font-heading">
+            <Text className="text-base text-foreground font-heading">
               Terminal Auth Vault
             </Text>
             <Text className="text-xs text-muted-foreground font-primary mt-0.5">
