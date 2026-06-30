@@ -1,0 +1,223 @@
+import React, { useState } from "react";
+import {
+  View,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  ScrollView,
+  Alert,
+  ActivityIndicator,
+  Switch,
+} from "react-native";
+import { WifiOff, LogOut, UserCircle } from "lucide-react-native";
+
+const MOCK_PROFILE = {
+  profile_user_id: "usr_001",
+  profile_full_name: "Lyda Conley",
+  role_name: "OWNER",
+};
+
+const MOCK_IS_ONLINE = true;
+
+function AvatarCircle({ name, size = 48 }: { name: string; size?: number }) {
+  const initials = name
+    .split(" ")
+    .map((w) => w[0])
+    .slice(0, 2)
+    .join("")
+    .toUpperCase();
+  const hue = name.split("").reduce((acc, c) => acc + c.charCodeAt(0), 0) % 360;
+  return (
+    <View
+      style={{
+        width: size,
+        height: size,
+        borderRadius: size / 2,
+        backgroundColor: `hsl(${hue}, 45%, 78%)`,
+        alignItems: "center",
+        justifyContent: "center",
+      }}
+    >
+      <Text style={{ fontSize: size * 0.33, fontWeight: "700", color: `hsl(${hue}, 45%, 28%)` }}>
+        {initials}
+      </Text>
+    </View>
+  );
+}
+
+interface FieldProps {
+  label: string;
+  value: string;
+  onChange: (v: string) => void;
+  placeholder?: string;
+  disabled?: boolean;
+  error?: boolean;
+  keyboardType?: "default" | "email-address" | "phone-pad";
+  prefix?: string;
+}
+
+function Field({ label, value, onChange, placeholder, disabled, error, keyboardType = "default", prefix }: FieldProps) {
+  return (
+    <View className="gap-1.5">
+      <Text className="text-[11px] font-bold uppercase tracking-widest text-muted-foreground font-secondary">
+        {label}
+      </Text>
+      <View
+        className={`flex-row items-center h-11 rounded-xl border px-3.5 ${
+          error ? "border-destructive bg-destructive/5" : "border-border bg-card"
+        } ${disabled ? "opacity-50" : ""}`}
+      >
+        {prefix && (
+          <Text className="text-sm font-semibold text-muted-foreground mr-1.5 font-secondary">
+            {prefix}
+          </Text>
+        )}
+        <TextInput
+          value={value}
+          onChangeText={onChange}
+          editable={!disabled}
+          placeholder={placeholder}
+          placeholderTextColor="#9ca3af"
+          keyboardType={keyboardType}
+          className="flex-1 text-sm text-foreground font-primary"
+          style={{ paddingVertical: 0 }}
+        />
+      </View>
+    </View>
+  );
+}
+
+export function UserSettings() {
+  const isOnline = MOCK_IS_ONLINE;
+  const profile = MOCK_PROFILE;
+
+  const [nameInput, setNameInput] = useState(profile.profile_full_name);
+  const [phoneInput, setPhoneInput] = useState("");
+  const [saving, setSaving] = useState(false);
+  const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
+
+  const isPhoneValid = !phoneInput || /^[17]\d{8}$/.test(phoneInput.trim());
+  const isNameValid = nameInput.trim().length > 0;
+  const isFormDirty = nameInput.trim() !== profile.profile_full_name || !!phoneInput;
+  const isSaveDisabled = !isFormDirty || !isPhoneValid || !isNameValid || saving || !isOnline;
+
+  const handleSave = async () => {
+    if (isSaveDisabled) return;
+    setSaving(true);
+    await new Promise((r) => setTimeout(r, 900));
+    setSaving(false);
+    Alert.alert("Profile Updated", "Your details have been saved successfully.");
+  };
+
+  const handleLogout = () => {
+    Alert.alert(
+      "Log Out",
+      "Are you sure you want to log out? You'll need to sign back in.",
+      [
+        { text: "Cancel", style: "cancel" },
+        {
+          text: "Log Out",
+          style: "destructive",
+          onPress: () => Alert.alert("Logged out", "Session cleared."),
+        },
+      ]
+    );
+  };
+
+  return (
+    <ScrollView
+      className="flex-1"
+      contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: 32 }}
+      showsVerticalScrollIndicator={false}
+      keyboardShouldPersistTaps="handled"
+    >
+      {!isOnline && (
+        <View className="flex-row items-center gap-2.5 p-3.5 rounded-2xl bg-amber-50 border border-amber-200 mb-5">
+          <WifiOff size={16} color="#92400e" />
+          <Text className="text-xs font-semibold text-amber-900 font-secondary flex-1">
+            Profile updates require an active connection.
+          </Text>
+        </View>
+      )}
+
+      <View className="flex-row items-center gap-4 p-4 rounded-2xl bg-card border border-border mb-6">
+        <AvatarCircle name={profile.profile_full_name} size={56} />
+        <View className="flex-1 min-w-0">
+          <Text className="text-base  text-foreground font-heading" numberOfLines={1}>
+            {profile.profile_full_name}
+          </Text>
+          <Text className="text-xs text-muted-foreground font-primary mt-0.5" numberOfLines={1}>
+            {profile.profile_user_id}
+          </Text>
+          <View className="mt-2 self-start bg-primary rounded-md px-2.5 py-0.5">
+            <Text className="text-[11px]  text-primary-foreground font-heading tracking-wide">
+              {profile.role_name}
+            </Text>
+          </View>
+        </View>
+      </View>
+
+      <View className="gap-4">
+        <Field
+          label="Display Full Name"
+          value={nameInput}
+          onChange={setNameInput}
+          placeholder="Enter full name"
+          disabled={!isOnline}
+        />
+
+        <View>
+          <Field
+            label="Contact Number (Optional)"
+            value={phoneInput}
+            onChange={(t) => setPhoneInput(t.replace(/\D/g, ""))}
+            placeholder="712345678"
+            keyboardType="phone-pad"
+            disabled={!isOnline}
+            error={!isPhoneValid}
+            prefix="+254"
+          />
+          {!isPhoneValid && (
+            <Text className="text-[11px] font-semibold text-destructive font-secondary mt-1.5">
+              Must start with 1 or 7 and contain exactly 9 digits.
+            </Text>
+          )}
+        </View>
+      </View>
+
+      <View className="flex-row gap-3 mt-5">
+        <TouchableOpacity
+          onPress={handleSave}
+          disabled={isSaveDisabled}
+          activeOpacity={0.8}
+          className={`flex-1 h-11 rounded-xl items-center justify-center ${
+            isSaveDisabled ? "bg-muted" : "bg-primary"
+          }`}
+        >
+          {saving ? (
+            <ActivityIndicator color="#ffffff" size="small" />
+          ) : (
+            <Text
+              className={`text-sm font-semibold font-secondary ${
+                isSaveDisabled ? "text-muted-foreground" : "text-primary-foreground"
+              }`}
+            >
+              Update Profile
+            </Text>
+          )}
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          onPress={handleLogout}
+          activeOpacity={0.8}
+          className="flex-row items-center gap-2 px-5 h-11 rounded-xl border border-border bg-card"
+        >
+          <LogOut size={15} color="#ef4444" />
+          <Text className="text-sm font-semibold text-destructive font-secondary">
+            Logout
+          </Text>
+        </TouchableOpacity>
+      </View>
+    </ScrollView>
+  );
+}
