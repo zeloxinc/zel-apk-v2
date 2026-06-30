@@ -1,7 +1,8 @@
 import React from "react";
 import { View, Text, TouchableOpacity } from "react-native";
-import { Sun, Moon, Monitor } from "lucide-react-native";
+import { Sun, Moon, Monitor, AlertCircleIcon } from "lucide-react-native";
 import { useColorScheme } from "nativewind";
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 
 const themes = [
   { id: "light", label: "Light", sublabel: "Always light", icon: Sun },
@@ -27,16 +28,16 @@ export function ThemeSettings() {
 
   return (
     <View className="bg-card rounded-2xl  mb-1">
-      <View className="p-5 pb-4">
-        <Text className="text-base font-bold text-foreground font-heading">
+      {/*<View className="p-5 pb-4">
+        <Text className="text-base font-heading text-foreground font-heading">
           Display Theme
         </Text>
         <Text className="text-xs text-muted-foreground font-primary mt-0.5">
           Match the UI to your terminal environment lighting.
         </Text>
-      </View>
+      </View>*/}
 
-      <View className="px-5 pb-5 flex-row gap-3">
+      {/*<View className="px-5 pb-5 flex-row gap-3">
         {themes.map((t) => {
           const Icon = t.icon;
           const isActive = selected === t.id;
@@ -87,6 +88,17 @@ export function ThemeSettings() {
             </TouchableOpacity>
           );
         })}
+      </View>*/}
+
+      <View className="mx-5 rounded-2xl  bg-card p-5">
+        <Text className="mb-2 font-heading text-card-foreground">
+          🚧 Themes are being cooked up
+        </Text>
+      
+        <Text className="font-primary text-muted-foreground">
+          Theme customization is currently under development. More color palettes and
+          personalization options will be available in an upcoming update.
+        </Text>
       </View>
     </View>
   );

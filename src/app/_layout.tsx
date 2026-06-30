@@ -86,7 +86,7 @@ export default function RootLayout() {
 
   return (
     <GestureHandlerRootView>
-      <ThemeProvider value={colorScheme === "dark" ? DARK_THEME : LIGHT_THEME}>
+      <ThemeProvider value={colorScheme === "dark" ? LIGHT_THEME : LIGHT_THEME}>
    
         <View style={[activeVars, { flex: 1 }]}>
           <StatusBar style={colorScheme === "dark" ? "light" : "dark"} />
