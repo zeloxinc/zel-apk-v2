@@ -36,16 +36,16 @@ export function DashboardHero({ stats, shopName }: Props) {
 
   return (
     <Animated.View style={animStyle} className="pb-4">
-      <Text className="font-sans text-xs font-semibold tracking-widest uppercase text-neutral-600 mb-4">
+      <Text className="font-sans text-xs font-secondary tracking-widest uppercase text-neutral-600 mb-4">
         {shopName}
       </Text>
 
       <View className="flex-row items-baseline gap-2">
-        <Text className="font-sans text-lg text-neutral-400 leading-none" style={{ alignSelf: "flex-start", marginTop: 6 }}>
+        <Text className="font-primary text-lg text-neutral-400 leading-none" style={{ alignSelf: "flex-start", marginTop: 6 }}>
           KES
         </Text>
         <Text
-          className={`font-sansBold  tracking-tight leading-none ${
+          className={`font-heading  tracking-tight leading-none ${
             hasSales ? "text-5xl text-neutral-950" : "text-5xl text-neutral-200"
           }`}
         >
@@ -54,7 +54,7 @@ export function DashboardHero({ stats, shopName }: Props) {
       </View>
 
       <View className="flex-row items-center gap-3 mt-3 flex-wrap">
-        <Text className="font-sans text-sm font-medium text-neutral-500">
+        <Text className="font-primary text-sm font-medium text-neutral-500">
           {stats.todayTransactionCount === 0
             ? "No sales yet today"
             : `${stats.todayTransactionCount} sale${stats.todayTransactionCount !== 1 ? "s" : ""} today`}
@@ -73,7 +73,7 @@ export function DashboardHero({ stats, shopName }: Props) {
               : <TrendingDown size={10} color="#991b1b" strokeWidth={2.5} />
             }
             <Text
-              className={`font-sans text-xs font-semibold ${
+              className={`font-primary text-xs font-semibold ${
                 isUp ? "text-green-800" : "text-red-800"
               }`}
             >
