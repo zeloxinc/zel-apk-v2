@@ -42,7 +42,7 @@ export function MobilePosHeader({ title = "POS", onAvatarClick }: MobilePosHeade
   return (
     <View
       className="w-full z-40 border-b border-black/[0.06] bg-stone-100/85"
-      style={{ paddingTop: insets.top }}
+      // style={{ paddingTop: insets.top }}
     >
       <View className="flex-row items-center justify-between px-4 h-16">
         {isOwner ? (

@@ -1,4 +1,7 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { Platform } from "react-native";
+import * as NavigationBar from "expo-navigation-bar";
+import { StatusBar } from "expo-status-bar";
 import { View, ScrollView, Pressable, TextInput } from "react-native";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -9,6 +12,18 @@ import { CartContent } from "./cart-content";
 import { CartSheet } from "./cart-sheet";
 
 export function PosScreen() {
+  useEffect(() => {
+     if (Platform.OS === "android") {
+       NavigationBar.setVisibilityAsync("hidden");
+     }
+ 
+     return () => {
+       if (Platform.OS === "android") {
+         NavigationBar.setVisibilityAsync("visible");
+       }
+     };
+   }, []);
+  
   const {
     searchQuery,
     selectedCategory,
@@ -53,6 +68,7 @@ export function PosScreen() {
 
   return (
     <View className="flex-1 bg-background">
+      <StatusBar  hidden />
       <View className="flex-1 flex-row min-h-0">
         <View className="flex-1 md:w-3/5 lg:w-2/3 md:border-r md:border-border">
           <View className="p-3 gap-2.5 border-b border-border bg-background">
