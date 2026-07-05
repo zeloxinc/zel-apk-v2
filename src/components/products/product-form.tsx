@@ -129,7 +129,6 @@ export function ProductForm({ shopId, product, onSuccess, onCancel }: ProductFor
       variant_current_stock: parseInt(v.variant_current_stock, 10) || 0,
     }));
 
-    // In-memory only — wire this to your real RN data layer once it exists.
     onSuccess({ product_id: productId, product_name: productName.trim(), variants: savedVariants });
   };
 
@@ -142,7 +141,7 @@ export function ProductForm({ shopId, product, onSuccess, onCancel }: ProductFor
             placeholder="e.g. Supa Loaf, Kabras Sugar, Coca-Cola"
             value={productName}
             onChangeText={setProductName}
-            className={`h-11 px-3 rounded-lg border bg-white text-sm ${
+            className={`h-11 px-3 rounded-lg border bg-white text-sm font-primary ${
               errors.productName ? "border-red-400" : "border-neutral-200"
             }`}
           />
@@ -203,18 +202,18 @@ export function ProductForm({ shopId, product, onSuccess, onCancel }: ProductFor
                         placeholder="e.g. Kabras 1kg"
                         value={v.variant_name}
                         onChangeText={(val) => updateVariant(i, "variant_name", val)}
-                        className={`h-11 px-3 rounded-lg border bg-white text-sm ${
+                        className={`h-11 px-3 rounded-lg border font-primary bg-white text-sm ${
                           errors[`v${i}_name`] ? "border-red-400" : "border-neutral-200"
                         }`}
                       />
                     </View>
 
-                    <View className="gap-1">
+                    {/*<View className="gap-1">
                       <Text className="text-xs font-heading text-neutral-500 uppercase">SKU</Text>
                       <View className="h-11 px-3 justify-center rounded-lg bg-neutral-100 border border-neutral-200">
                         <Text className="text-xs font-mono text-neutral-500">{v.variant_sku}</Text>
                       </View>
-                    </View>
+                    </View>*/}
 
                     <View className="gap-1">
                       <Text className="text-xs font-heading text-neutral-500 uppercase">Unit of Measure</Text>
@@ -244,36 +243,52 @@ export function ProductForm({ shopId, product, onSuccess, onCancel }: ProductFor
                     <View className="flex-row gap-3">
                       <View className="flex-1 gap-1">
                         <Text className="text-xs font-heading text-neutral-500 uppercase">Buying Price</Text>
-                        <View className="relative justify-center">
-                          <Text className="absolute left-3 text-[11px] font-heading text-neutral-400 z-10">
-                            KES
-                          </Text>
+                        <View
+                          className={`flex-row h-11 overflow-hidden rounded-lg border bg-white ${
+                            errors[`v${i}_buy`] ? "border-red-400" : "border-neutral-200"
+                          }`}
+                        >
+                          <View className="items-center justify-center border-r border-neutral-200 bg-neutral-50 px-3">
+                            <Text className="text-[11px] font-heading font-medium text-neutral-500">
+                              KES
+                            </Text>
+                          </View>
+                        
                           <TextInput
                             placeholder="0.00"
                             keyboardType="numeric"
                             value={v.variant_buying_price}
-                            onChangeText={(val) => updateVariant(i, "variant_buying_price", val)}
-                            className={`h-11 pl-12 pr-3 rounded-lg border bg-white text-sm ${
-                              errors[`v${i}_buy`] ? "border-red-400" : "border-neutral-200"
-                            }`}
+                            onChangeText={(val) =>
+                              updateVariant(i, "variant_buying_price", val)
+                            }
+                            className="flex-1 px-3 font-primary text-sm text-neutral-900"
+                            placeholderTextColor="#A3A3A3"
                           />
                         </View>
                       </View>
 
                       <View className="flex-1 gap-1">
                         <Text className="text-xs font-heading text-neutral-500 uppercase">Selling Price</Text>
-                        <View className="relative justify-center">
-                          <Text className="absolute left-3 text-[11px] font-heading text-neutral-400 z-10">
-                            KES
-                          </Text>
+                        <View
+                          className={`flex-row h-11 overflow-hidden rounded-lg border bg-white ${
+                            errors[`v${i}_sell`] ? "border-red-400" : "border-neutral-200"
+                          }`}
+                        >
+                          <View className="items-center justify-center border-r border-neutral-200 bg-neutral-50 px-3">
+                            <Text className="text-xs font-semibold tracking-wide text-neutral-600">
+                              KES
+                            </Text>
+                          </View>
+                        
                           <TextInput
                             placeholder="0.00"
                             keyboardType="numeric"
                             value={v.variant_selling_price}
-                            onChangeText={(val) => updateVariant(i, "variant_selling_price", val)}
-                            className={`h-11 pl-12 pr-3 rounded-lg border bg-white text-sm ${
-                              errors[`v${i}_sell`] ? "border-red-400" : "border-neutral-200"
-                            }`}
+                            onChangeText={(val) =>
+                              updateVariant(i, "variant_selling_price", val)
+                            }
+                            className="flex-1 px-3 font-primary text-sm text-neutral-900"
+                            placeholderTextColor="#A3A3A3"
                           />
                         </View>
                       </View>
@@ -286,7 +301,7 @@ export function ProductForm({ shopId, product, onSuccess, onCancel }: ProductFor
                         keyboardType="numeric"
                         value={v.variant_current_stock}
                         onChangeText={(val) => updateVariant(i, "variant_current_stock", val)}
-                        className="h-11 px-3 rounded-lg border border-neutral-200 bg-white text-sm"
+                        className="h-11 px-3 rounded-lg border border-neutral-200 bg-white text-sm font-primary"
                       />
                     </View>
                   </AccordionContent>

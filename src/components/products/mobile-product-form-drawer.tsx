@@ -26,11 +26,11 @@ export function MobileProductFormDrawer({
         <Pressable className="absolute inset-0 bg-black/40" onPress={() => onOpenChange(false)} />
 
         <View
-          style={{ height: screenHeight * 0.96 }}
+          style={{ height: screenHeight * 0.85 }}
           className="bg-white rounded-t-2xl overflow-hidden"
         >
           <View className="px-5 pt-5 pb-3">
-            <Text className="font-heading text-xl text-neutral-900">
+            <Text className="font-heading text-xl text-neutral-900 pt-6">
               {product ? "Edit Product" : "Add Product"}
             </Text>
           </View>

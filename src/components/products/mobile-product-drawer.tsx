@@ -108,7 +108,7 @@ export function MobileProductDrawer({
             <Button variant="outline" onPress={onEdit} className="flex-1 h-11 rounded-xl">
               <View className="flex-row items-center gap-2">
                 <Edit2 size={14} color="#171717" />
-                <Text className="text-[13px] font-heading text-neutral-800">Edit Product</Text>
+                <Text className="text-[13px] font-heading text-neutral-800 ">Edit Product</Text>
               </View>
             </Button>
             <Button variant="outline" onPress={onDelete} className="flex-1 h-11 rounded-xl border-red-200">

@@ -93,19 +93,26 @@ export function ProductsScreen({ shopId }: ProductsScreenProps) {
           </Button>
         </View>
 
-        <View className="relative  justify-center">
-          <View className="absolute left-3 z-10">
-            <Search size={15} color="#a3a3a3" />
+        <View className="flex-row h-10 overflow-hidden rounded-lg border border-neutral-200 bg-white">
+          <View className="items-center justify-center border-r border-neutral-200 bg-neutral-50 px-3">
+            <Search size={15} color="#737373" />
           </View>
+        
           <TextInput
             placeholder="Search products, variants"
             value={search}
             onChangeText={setSearch}
-            className="pl-8 pr-8 h-10 font-primary text-[13px] bg-white rounded-lg border border-neutral-200"
+            className="flex-1 px-3 font-primary text-[13px] text-neutral-900"
+            placeholderTextColor="#A3A3A3"
           />
+        
           {search.length > 0 && (
-            <Pressable onPress={() => setSearch("")} className="absolute right-3 z-10 p-0.5">
-              <X size={13} color="#a3a3a3" />
+            <Pressable
+              onPress={() => setSearch("")}
+              className="items-center justify-center px-3"
+              hitSlop={8}
+            >
+              <X size={13} color="#A3A3A3" />
             </Pressable>
           )}
         </View>
