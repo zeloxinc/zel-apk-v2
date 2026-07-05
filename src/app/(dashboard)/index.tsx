@@ -103,7 +103,7 @@ export default function DashboardHomeScreen() {
             <DashboardPosCard />
             <View
               className="bg-white rounded-2xl border border-neutral-100 overflow-hidden"
-              style={{ shadowColor: "#000", shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.04, shadowRadius: 8, elevation: 2 }}
+              style={{ shadowColor: "#000", shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.4, shadowRadius: 4, elevation: 2 }}
             >
               <DashboardQuickStats stats={stats} lowStock={safelow} />
             </View>

@@ -10,7 +10,8 @@ import { Check, ArrowRight } from "lucide-react-native";
 import { useRouter } from "expo-router";
 import type { DashboardStats, LowStockItem } from "@/lib/hooks/dashboard-data";
 
-const MAX_STOCK = 50;
+// TODO: user to decide the max stock
+const MAX_STOCK = 5000;
 
 function barWidth(n: number) {
   return Math.min(Math.round((n / MAX_STOCK) * 100), 100);
@@ -29,7 +30,7 @@ function StockPanel({ items }: { items: LowStockItem[] }) {
         <View className="w-5 h-5 rounded-full bg-green-200 items-center justify-center">
           <Check size={11} color="#166534" strokeWidth={2.5} />
         </View>
-        <Text className="font-sans text-sm text-neutral-500">
+        <Text className="font-primary text-sm text-neutral-500">
           Everything is stocked up
         </Text>
       </View>
@@ -43,7 +44,7 @@ function StockPanel({ items }: { items: LowStockItem[] }) {
         return (
           <View key={item.variantId} className="flex-row items-center gap-2.5">
             <Text
-              className="flex-1 font-sansMedium text-sm  text-neutral-800"
+              className="flex-1 font-secondary text-sm  text-neutral-800"
               numberOfLines={1}
             >
               {item.variantName}
@@ -60,7 +61,7 @@ function StockPanel({ items }: { items: LowStockItem[] }) {
             </View>
 
             <Text
-              className={`font-sans text-xs w-11 text-right tabular-nums ${meta.label}`}
+              className={`font-primary text-xs w-11 text-right tabular-nums ${meta.label}`}
             >
               {item.remaining} left
             </Text>
@@ -102,7 +103,6 @@ export function DashboardQuickStats({ stats, lowStock }: Props) {
   const panels: Panel[] = hasLowStock ? ["stock", "good"] : ["good"];
   const [idx, setIdx] = useState(0);
 
-  // Wrap idx so it doesn't go out of bounds if lowStock changes
   const safeIdx = idx % panels.length;
 
   useEffect(() => {
@@ -129,25 +129,25 @@ export function DashboardQuickStats({ stats, lowStock }: Props) {
     >
       <View className="flex-row border-b border-neutral-300">
         <View className="flex-1 px-4 py-3.5 border-r border-neutral-300">
-          <Text className="font-sansMedium text-[10px] tracking-widest uppercase text-neutral-400 mb-1.5">
+          <Text className="font-secondary text-[10px] tracking-widest uppercase text-neutral-400 mb-1.5">
             Today
           </Text>
-          <Text className="font-sansBold text-3xl tracking-tight leading-none text-neutral-950">
+          <Text className="font-heading text-3xl tracking-tight leading-none text-neutral-950">
             {stats.todayTransactionCount}
           </Text>
-          <Text className="font-sans text-xs text-neutral-400 mt-1">
+          <Text className="font-primary text-xs text-neutral-400 mt-1">
             transaction{stats.todayTransactionCount !== 1 ? "s" : ""}
           </Text>
         </View>
 
         <View className="flex-1 px-4 py-3.5">
-          <Text className="font-sansMedium text-[10px] tracking-widest uppercase text-neutral-400 mb-1.5">
+          <Text className="font-secondary text-[10px] tracking-widest uppercase text-neutral-400 mb-1.5">
             Staff
           </Text>
-          <Text className="font-sansBold text-3xl tracking-tight leading-none text-neutral-950">
+          <Text className="font-heading text-3xl tracking-tight leading-none text-neutral-950">
             {stats.cashierCount}
           </Text>
-          <Text className="font-sans text-xs text-neutral-400 mt-1">
+          <Text className="font-primary text-xs text-neutral-400 mt-1">
             registered
           </Text>
         </View>
@@ -155,7 +155,7 @@ export function DashboardQuickStats({ stats, lowStock }: Props) {
 
       <View className="pt-3">
         <View className="flex-row items-center justify-between px-4 mb-2.5">
-          <Text className="font-sansMedium text-[10px] tracking-widest uppercase text-neutral-400">
+          <Text className="font-secondary text-[10px] tracking-widest uppercase text-neutral-400">
             Low stock
           </Text>
 
@@ -166,7 +166,7 @@ export function DashboardQuickStats({ stats, lowStock }: Props) {
                 hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
                 className="flex-row items-center gap-0.5"
               >
-                <Text className="font-sansMedium text-xs text-neutral-500">
+                <Text className="font-secondary text-xs text-neutral-500">
                   View all
                 </Text>
                 <ArrowRight size={10} color="#737373" strokeWidth={2.5} />

@@ -31,7 +31,7 @@ export function DashboardTopItems({ items }: Props) {
 
   return (
     <Animated.View style={animStyle} className="w-full">
-      <Text className="font-sansBold text-[11px] tracking-wider uppercase text-neutral-400 mb-3">
+      <Text className="font-heading text-[11px] tracking-wider uppercase text-neutral-400 mb-3">
         Top Items Today
       </Text>
 
@@ -56,7 +56,7 @@ export function DashboardTopItems({ items }: Props) {
               className="w-5 h-5 rounded-full items-center justify-center shrink-0"
               style={{ backgroundColor: RANK_COLORS[i] ?? "#d4d4d4" }}
             >
-              <Text className="font-sansBold text-[9px] text-white">
+              <Text className="font-heading text-[9px] text-white">
                 {i + 1}
               </Text>
             </View>
@@ -72,7 +72,7 @@ export function DashboardTopItems({ items }: Props) {
               ×{item.qty}
             </Text>
 
-            <Text className="font-sansBold text-[13px]  text-neutral-900 tabular-nums">
+            <Text className="font-heading text-[13px]  text-neutral-900 tabular-nums">
               {formatKES(item.revenue)}
             </Text>
           </View>
