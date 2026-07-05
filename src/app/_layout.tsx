@@ -66,8 +66,14 @@ const DARK_THEME = {
 };
 
 export default function RootLayout() {
-  const { colorScheme } = useColorScheme(); 
+  const {setColorScheme, colorScheme } = useColorScheme(); 
   const [isMounted, setIsMounted] = useState(false);
+
+  // Makes the theme default to light always
+  // TODO: Hook up the right theme functionality
+  useEffect(() => {
+    setColorScheme("light");
+  }, []);
   
   const [loaded] = useFonts({
     BricolageGrotesque_400Regular,
