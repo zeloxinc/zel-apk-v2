@@ -29,6 +29,8 @@ export function DashboardPosCard() {
     ],
   }));
 
+  // TODO: Use a different bbg pattern
+
   return (
     <Animated.View style={cardStyle} className="w-full">
       <TouchableOpacity
@@ -55,7 +57,6 @@ export function DashboardPosCard() {
             elevation: 4,
           }}
         >
-          {/* Background pattern */}
           <View
             className="absolute inset-0 opacity-40"
             pointerEvents="none"
@@ -87,7 +88,6 @@ export function DashboardPosCard() {
             </Svg>
           </View>
 
-          {/* Decorative circle */}
           <View
             className="absolute -right-12 -top-12 h-32 w-32 rounded-full"
             style={{
@@ -98,17 +98,17 @@ export function DashboardPosCard() {
 
           <View className="relative z-10 gap-5 p-5">
             <View className="gap-0.5">
-              <Text className="font-sansBold text-xl tracking-tight text-white">
+              <Text className="font-heading text-xl tracking-tight text-white">
                 Start selling
               </Text>
 
-              <Text className="font-sans text-xs leading-normal text-neutral-400">
+              <Text className="font-primary text-xs leading-normal text-neutral-400">
                 Process purchases, scan tags, and accept payments offline.
               </Text>
             </View>
 
             <View className="h-12 items-center justify-center rounded-xl bg-white">
-              <Text className="font-sansBold text-sm text-neutral-950">
+              <Text className="font-heading text-sm text-neutral-950">
                 Open POS
               </Text>
             </View>
