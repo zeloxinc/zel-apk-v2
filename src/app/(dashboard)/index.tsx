@@ -99,7 +99,7 @@ export default function DashboardHomeScreen() {
         <DashboardHero stats={stats!} shopName={shop.shop_name} />
 
         {!isTablet && (
-          <View className="gap-4">
+          <View className="gap-4 mb-24">
             <DashboardPosCard />
             <View
               className="bg-white rounded-2xl border border-neutral-100 overflow-hidden"
@@ -144,4 +144,3 @@ export default function DashboardHomeScreen() {
 
 
 // TODO: Fix the logo switch on scroll
-// TODO: The undefined shit
