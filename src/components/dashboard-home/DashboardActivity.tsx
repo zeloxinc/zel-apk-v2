@@ -41,7 +41,7 @@ export function DashboardActivity({ items }: Props) {
 
   return (
     <Animated.View style={animStyle} className="w-full">
-      <Text className="font-sansBold text-[11px] tracking-wider uppercase text-neutral-400 mb-3">
+      <Text className="font-heading text-[11px] tracking-wider uppercase text-neutral-400 mb-3">
         Recent Activity
       </Text>
 
@@ -55,10 +55,10 @@ export function DashboardActivity({ items }: Props) {
             shadowRadius: 2,
           }}
         >
-          <Text className="font-sans text-sm font-bold text-neutral-700">
+          <Text className="font-primary text-sm font-bold text-neutral-700">
             No activity yet
           </Text>
-          <Text className="font-sans text-xs text-neutral-400 mt-1 text-center max-w-[220px] leading-normal">
+          <Text className="font-primary text-xs text-neutral-400 mt-1 text-center max-w-[220px] leading-normal">
             Activity logs populate automatically once your store registers operations.
           </Text>
         </View>
@@ -95,12 +95,12 @@ export function DashboardActivity({ items }: Props) {
 
                 <View className="flex-1 min-w-0 gap-0.5" style={{ paddingTop: 2 }}>
                   <Text
-                    className="font-sansMedium text-[14px] text-neutral-800 leading-tight pr-2"
+                    className="font-secondary text-[14px] text-neutral-800 leading-tight pr-2"
                     numberOfLines={2}
                   >
                     {item.label}
                   </Text>
-                  <Text className="font-sansMedium text-[11px] text-neutral-400 tabular-nums">
+                  <Text className="font-secondary text-[11px] text-neutral-400 tabular-nums">
                     {relativeTime(item.ts)}
                   </Text>
                 </View>
@@ -112,3 +112,5 @@ export function DashboardActivity({ items }: Props) {
     </Animated.View>
   );
 }
+
+// TODO: List the sale item
