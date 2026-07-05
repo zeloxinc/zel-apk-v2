@@ -111,6 +111,7 @@ export default function DashboardHomeScreen() {
           </View>
         )}
 
+        {/*TODO: USe a different skeloton and loading ui*/}
         {isTablet && (
           <View className="flex-row gap-4 items-start">
 
