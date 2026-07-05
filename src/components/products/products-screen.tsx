@@ -69,12 +69,12 @@ export function ProductsScreen({ shopId }: ProductsScreenProps) {
     setDeleteOpen(true);
   };
 
+  // TODO: Ndege
   const handleFormSuccess = () => {
     reload();
   };
 
   const handleDeleteConfirm = () => {
-    // In-memory only for now — wire to real deletion once RN data layer exists.
     reload();
     setSelectedProduct(null);
     setDeleteOpen(false);
@@ -82,7 +82,7 @@ export function ProductsScreen({ shopId }: ProductsScreenProps) {
 
   return (
     <View className="flex-1 bg-[#F4F8F7]">
-      <View className="px-4 pt-4 pb-2 gap-3 bg-[#F4F8F7]">
+      <View className="px-4 pt-2 pb-2 gap-3 bg-[#F4F8F7]">
         <View className="flex-row items-center justify-between">
           <Text className="text-2xl font-heading text-neutral-900">All Products</Text>
           <Button size="sm" onPress={openAdd} className="bg-neutral-900 rounded-md">
@@ -93,15 +93,15 @@ export function ProductsScreen({ shopId }: ProductsScreenProps) {
           </Button>
         </View>
 
-        <View className="relative justify-center">
+        <View className="relative  justify-center">
           <View className="absolute left-3 z-10">
             <Search size={15} color="#a3a3a3" />
           </View>
           <TextInput
-            placeholder="Search products, variants, SKUs..."
+            placeholder="Search products, variants"
             value={search}
             onChangeText={setSearch}
-            className="pl-9 pr-8 h-10 text-[13px] bg-white rounded-lg border border-neutral-200"
+            className="pl-8 pr-8 h-10 font-primary text-[13px] bg-white rounded-lg border border-neutral-200"
           />
           {search.length > 0 && (
             <Pressable onPress={() => setSearch("")} className="absolute right-3 z-10 p-0.5">

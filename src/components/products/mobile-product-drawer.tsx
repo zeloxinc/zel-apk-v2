@@ -80,11 +80,11 @@ export function MobileProductDrawer({
         <Pressable className="absolute inset-0 bg-black/40" onPress={() => onOpenChange(false)} />
 
         <View
-          style={{ height: screenHeight * 0.92 }}
+          style={{ height: screenHeight * 0.75 }}
           className="bg-white rounded-t-2xl overflow-hidden"
         >
-          <View className="px-5 pt-5 pb-3">
-            <Text className="font-heading text-xl text-neutral-900">{product.product_name}</Text>
+          <View className="px-5 pt-5 pb-3 ">
+            <Text className="font-heading text-xl text-neutral-900 pt-6">{product.product_name}</Text>
             <View className="flex-row items-center gap-2 mt-1">
               <Badge variant="secondary" className="bg-neutral-100 rounded">
                 <Text className="text-[11px] text-neutral-600 font-primary">
