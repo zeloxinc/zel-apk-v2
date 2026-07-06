@@ -7,3 +7,4 @@
 5. [ ] Bottom nav to morph into the screen on scroll
 6. [ ] Make the low stck count be user selected
 7. [ ] Text behind the bottom nav
+8. [ ] Make the pin 4 digits
