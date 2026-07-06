@@ -46,19 +46,11 @@ export function LoginScreen() {
     setError(null);
 
     try {
-      // TODO(ndege): pad the 4-digit PIN to meet Supabase's password length ME still using the six digits on the sign up screen
+      // TODO(ndege): pin pad will change to 4 digits 
 
-      // TODO: Ndege wire real login —
-      // 1. supabase.auth.signInWithPassword({ email, password: supabasePassword })
-      // 2. Query `staff` joined with staff_roles + staff_profiles by staff_user_id
-      // 3. If no staff row but a staff_profiles row exists → user signed up but
-      //    hasn't finished onboarding → persist partial profile locally, route
-      //    to /auth/choose-path
-      // 4. If staff row exists but missing shop_id/role → route to /auth/choose-path
-      // 5. Otherwise persist full profile locally (replacement for db.profiles.put)
-      //    and call the RN equivalent of seedLocalDatabase(user.id, shopId)
-      // 6. Route by role: Owner/Admin → /dashboard, Cashier → /dashboard/sales/pos,
-      //    anything else → /onboarding
+      // TODO: Ndege wire real login flow
+     
+      //  Route by role
       await new Promise((resolve) => setTimeout(resolve, 600));
 
       router.push("/");
