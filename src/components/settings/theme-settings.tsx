@@ -1,7 +1,8 @@
 import React from "react";
 import { View, Text, TouchableOpacity } from "react-native";
-import { Sun, Moon, Monitor } from "lucide-react-native";
+import { Sun, Moon, Monitor, AlertCircleIcon } from "lucide-react-native";
 import { useColorScheme } from "nativewind";
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 
 const themes = [
   { id: "light", label: "Light", sublabel: "Always light", icon: Sun },
@@ -14,7 +15,6 @@ type ThemeId = (typeof themes)[number]["id"];
 export function ThemeSettings() {
   const { colorScheme, setColorScheme } = useColorScheme();
 
-  // Map system color scheme to our selection (default to system)
   const [selected, setSelected] = React.useState<ThemeId>("system");
 
   const handleSelect = (id: ThemeId) => {
@@ -27,17 +27,17 @@ export function ThemeSettings() {
   };
 
   return (
-    <View className="bg-card rounded-2xl border border-border mx-4 mb-1">
-      <View className="p-5 pb-4">
-        <Text className="text-base font-bold text-foreground font-heading">
+    <View className="bg-card rounded-2xl  mb-1">
+      {/*<View className="p-5 pb-4">
+        <Text className="text-base font-heading text-foreground font-heading">
           Display Theme
         </Text>
         <Text className="text-xs text-muted-foreground font-primary mt-0.5">
           Match the UI to your terminal environment lighting.
         </Text>
-      </View>
+      </View>*/}
 
-      <View className="px-5 pb-5 flex-row gap-3">
+      {/*<View className="px-5 pb-5 flex-row gap-3">
         {themes.map((t) => {
           const Icon = t.icon;
           const isActive = selected === t.id;
@@ -53,7 +53,6 @@ export function ThemeSettings() {
                   : "bg-muted border-border"
               }`}
             >
-              {/* Icon ring */}
               <View
                 className={`w-10 h-10 rounded-full items-center justify-center ${
                   isActive ? "bg-primary-foreground/10" : "bg-background"
@@ -68,7 +67,7 @@ export function ThemeSettings() {
 
               <View className="items-center gap-0.5">
                 <Text
-                  className={`text-[13px] font-bold font-secondary ${
+                  className={`text-[13px] font-secondary ${
                     isActive ? "text-primary-foreground" : "text-foreground"
                   }`}
                 >
@@ -83,13 +82,23 @@ export function ThemeSettings() {
                 </Text>
               </View>
 
-              {/* Active dot indicator */}
               {isActive && (
                 <View className="w-1.5 h-1.5 rounded-full bg-primary-foreground/50" />
               )}
             </TouchableOpacity>
           );
         })}
+      </View>*/}
+
+      <View className="mx-5 rounded-2xl  bg-card p-5">
+        <Text className="mb-2 font-heading text-card-foreground">
+          🚧 Themes are being cooked up
+        </Text>
+      
+        <Text className="font-primary text-muted-foreground">
+          Theme customization is currently under development. More color palettes and
+          personalization options will be available in an upcoming update.
+        </Text>
       </View>
     </View>
   );

@@ -1,7 +1,8 @@
 import React, { useState } from "react";
 import { View, Text, Switch } from "react-native";
 
-// Mock settings store — wire to your Dexie/Zustand hook later
+// TODO: Crucial; enable push notifications
+
 const mockSettings: Record<string, boolean> = {
   notif_sales: true,
   notif_stock: true,
@@ -56,9 +57,9 @@ export function NotificationSettings() {
   const teamNotif = getSetting("notif_team", false);
 
   return (
-    <View className="bg-card rounded-2xl border border-border mx-4 mb-1">
+    <View className="bg-card rounded-2xl  mb-1">
       <View className="p-5 pb-3">
-        <Text className="text-base font-bold text-foreground font-heading">Alert Triggers</Text>
+        <Text className="text-base text-foreground font-heading">Alert Triggers</Text>
         <Text className="text-xs text-muted-foreground font-primary mt-0.5">
           Adjust runtime system sound signals and event alerts.
         </Text>

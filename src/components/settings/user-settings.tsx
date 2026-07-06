@@ -11,7 +11,6 @@ import {
 } from "react-native";
 import { WifiOff, LogOut, UserCircle } from "lucide-react-native";
 
-// ── Mock data ─────────────────────────────────────────────────────────────────
 const MOCK_PROFILE = {
   profile_user_id: "usr_001",
   profile_full_name: "Lyda Conley",
@@ -20,7 +19,6 @@ const MOCK_PROFILE = {
 
 const MOCK_IS_ONLINE = true;
 
-// ── Avatar ────────────────────────────────────────────────────────────────────
 function AvatarCircle({ name, size = 48 }: { name: string; size?: number }) {
   const initials = name
     .split(" ")
@@ -47,7 +45,6 @@ function AvatarCircle({ name, size = 48 }: { name: string; size?: number }) {
   );
 }
 
-// ── Field ─────────────────────────────────────────────────────────────────────
 interface FieldProps {
   label: string;
   value: string;
@@ -90,7 +87,6 @@ function Field({ label, value, onChange, placeholder, disabled, error, keyboardT
   );
 }
 
-// ── Main ──────────────────────────────────────────────────────────────────────
 export function UserSettings() {
   const isOnline = MOCK_IS_ONLINE;
   const profile = MOCK_PROFILE;
@@ -135,7 +131,6 @@ export function UserSettings() {
       showsVerticalScrollIndicator={false}
       keyboardShouldPersistTaps="handled"
     >
-      {/* Offline Banner */}
       {!isOnline && (
         <View className="flex-row items-center gap-2.5 p-3.5 rounded-2xl bg-amber-50 border border-amber-200 mb-5">
           <WifiOff size={16} color="#92400e" />
@@ -145,25 +140,23 @@ export function UserSettings() {
         </View>
       )}
 
-      {/* Profile Card */}
       <View className="flex-row items-center gap-4 p-4 rounded-2xl bg-card border border-border mb-6">
         <AvatarCircle name={profile.profile_full_name} size={56} />
         <View className="flex-1 min-w-0">
-          <Text className="text-base font-bold text-foreground font-heading" numberOfLines={1}>
+          <Text className="text-base  text-foreground font-heading" numberOfLines={1}>
             {profile.profile_full_name}
           </Text>
           <Text className="text-xs text-muted-foreground font-primary mt-0.5" numberOfLines={1}>
             {profile.profile_user_id}
           </Text>
           <View className="mt-2 self-start bg-primary rounded-md px-2.5 py-0.5">
-            <Text className="text-[11px] font-bold text-primary-foreground font-secondary tracking-wide">
+            <Text className="text-[11px]  text-primary-foreground font-heading tracking-wide">
               {profile.role_name}
             </Text>
           </View>
         </View>
       </View>
 
-      {/* Form */}
       <View className="gap-4">
         <Field
           label="Display Full Name"
@@ -192,7 +185,6 @@ export function UserSettings() {
         </View>
       </View>
 
-      {/* Actions */}
       <View className="flex-row gap-3 mt-5">
         <TouchableOpacity
           onPress={handleSave}

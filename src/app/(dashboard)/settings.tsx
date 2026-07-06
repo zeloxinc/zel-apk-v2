@@ -23,6 +23,8 @@ import { NotificationSettings } from "@/components/settings/notification-setting
 import { ThemeSettings } from "@/components/settings/theme-settings";
 import { SecuritySettings } from "@/components/settings/security-settings";
 import { MobileSettingsAccordion } from "@/components/settings/mobile-settings-accordion";
+import { useSharedValue } from "react-native-reanimated";
+import { MobilePageHeader } from "@/components/header";
 
 
 // Mock
@@ -76,12 +78,11 @@ function TabletLayout({
 
   return (
     <View className="flex-1 flex-row">
-      {/* Sidebar */}
       <View className="w-72 bg-card border-r border-border">
         <View className="px-5 pt-6 pb-4 border-b border-border">
           <Text className="text-xl font-bold text-foreground font-heading">Settings</Text>
           <Text className="text-xs text-muted-foreground font-primary mt-0.5">
-            Manage terminal configuration
+            Manage  configuration
           </Text>
         </View>
         <ScrollView className="flex-1 p-3">
@@ -111,7 +112,6 @@ function TabletLayout({
         </ScrollView>
       </View>
 
-      {/* Content */}
       <ScrollView className="flex-1 bg-background" contentContainerStyle={{ padding: 32 }}>
         {ActiveComponent ? (
           <ActiveComponent />
@@ -133,7 +133,6 @@ function TabletLayout({
   );
 }
 
-// ── Main Screen ───────────────────────────────────────────────────────────────
 export default function SettingsScreen() {
   const { width } = useWindowDimensions();
   const isTablet = width >= 768;
@@ -141,8 +140,10 @@ export default function SettingsScreen() {
 
   const allowedSections = ALL_SECTIONS.filter((s) => !s.ownerOnly || IS_OWNER);
 
+   const scrollY = useSharedValue(0);
+
   return (
-    <SafeAreaView className="flex-1 bg-background" edges={["top"]}>
+    <View className="flex-1 bg-background">
       {isTablet ? (
         <TabletLayout
           sections={allowedSections as any}
@@ -152,23 +153,26 @@ export default function SettingsScreen() {
       ) : (
         <ScrollView
           className="flex-1"
-          contentContainerStyle={{ paddingHorizontal: 16, paddingTop: 20, paddingBottom: 120 }}
+          contentContainerStyle={{  paddingBottom: 120 }}
           showsVerticalScrollIndicator={false}
         >
-          {/* Profile header */}
-          <View className="mb-7">
-            <AvatarCircle name={MOCK_PROFILE.profile_full_name} size={60} />
-            <Text className="text-xl font-bold text-foreground font-heading mt-3">
-              {MOCK_SHOP.shop_name}
-            </Text>
-            <Text className="text-xs font-medium text-muted-foreground font-primary mt-0.5">
-              {MOCK_PROFILE.profile_full_name} · {MOCK_PROFILE.role_name}
-            </Text>
-          </View>
 
-          <MobileSettingsAccordion sections={allowedSections as any} />
+            <MobilePageHeader title="Settings" scrollY={scrollY} />
+          <View className="px-5">
+            <View className="mb-7">
+              <AvatarCircle name={MOCK_PROFILE.profile_full_name} size={60} />
+              <Text className="text-xl text-foreground font-heading mt-3">
+                {MOCK_SHOP.shop_name} 
+              </Text>
+              <Text className="text-xs font-medium text-muted-foreground font-primary mt-0.5">
+                {MOCK_PROFILE.profile_full_name} · {MOCK_PROFILE.role_name}
+              </Text>
+            </View>
+  
+            <MobileSettingsAccordion sections={allowedSections as any} />
+          </View>
         </ScrollView>
       )}
-    </SafeAreaView>
+    </View>
   );
 }
