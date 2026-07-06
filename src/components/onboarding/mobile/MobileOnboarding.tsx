@@ -28,7 +28,7 @@ export function MobileOnboarding() {
   // TODO: Change the path
   function handleSkip() {
     completeOnboarding();
-    router.replace("/(auth)/sign-up");
+    router.replace("/sign-up");
   }
 
   const swipe = Gesture.Pan()

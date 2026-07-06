@@ -58,8 +58,6 @@ export function MobileHomeHeader({
   const logoY = useSharedValue(0);
   const identityY = useSharedValue(4);
 
-  // Watches the incoming scrollY shared value on the UI thread and
-  // drives all the derived animation values whenever it crosses `threshold`.
   useAnimatedReaction(
     () => activeScrollY.value,
     (currentY) => {

@@ -45,7 +45,9 @@ export function DashboardPosCard() {
             stiffness: 300,
           });
         }}
-        onPress={() => router.push("/sales/pos")}
+        // onPress={() => router.push("/sales/pos")}
+        onPress={() => router.push("/onboarding")}
+        // todo: change back
       >
         <View
           className="relative overflow-hidden rounded-2xl border border-neutral-800/40 bg-neutral-950"
