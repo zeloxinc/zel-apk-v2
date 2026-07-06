@@ -118,6 +118,7 @@ export function UserSettings() {
         {
           text: "Log Out",
           style: "destructive",
+          // TODO: Ndege the logout functionality
           onPress: () => Alert.alert("Logged out", "Session cleared."),
         },
       ]
