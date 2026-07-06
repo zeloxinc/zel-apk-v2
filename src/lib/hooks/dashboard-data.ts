@@ -189,7 +189,6 @@ export function useDashboardStats(
     load();
   }, [shopId]);
 
-  console.log("dta", data)
 
   return data;
 }

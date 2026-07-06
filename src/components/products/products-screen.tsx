@@ -15,6 +15,7 @@ interface ProductsScreenProps {
   shopId: string;
 }
 
+// Ndege: where the products are displayed - products page
 export function ProductsScreen({ shopId }: ProductsScreenProps) {
   const [search, setSearch] = useState("");
   const { catalog, loading, topSelling, reload } = useInventory();
@@ -69,7 +70,6 @@ export function ProductsScreen({ shopId }: ProductsScreenProps) {
     setDeleteOpen(true);
   };
 
-  // TODO: Ndege
   const handleFormSuccess = () => {
     reload();
   };
