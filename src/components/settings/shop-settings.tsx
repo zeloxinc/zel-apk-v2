@@ -3,7 +3,6 @@ import { View, ScrollView, ActivityIndicator, TextInput } from "react-native";
 import { WifiOff, Store, Copy, RefreshCw, Trash2 } from "lucide-react-native";
 import { useColorScheme } from "nativewind";
 
-// RNR components
 import {
   AlertDialog,
   AlertDialogAction,
@@ -23,7 +22,8 @@ import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { Text } from "@/components/ui/text";
 
-// ── Mock data ─────────────────────────────────────────────────────────────────
+
+// TODO: Ndege currently using mock data for the shop data 
 const MOCK_SHOP = {
   shop_id: "shop_001",
   shop_name: "Zelshop Mega Mart",

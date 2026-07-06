@@ -87,6 +87,8 @@ export function ProductForm({ shopId, product, onSuccess, onCancel }: ProductFor
     return Object.keys(e).length === 0;
   };
 
+  // TODO: Ndege update product variant - local ui
+
   const updateVariant = (index: number, field: keyof VariantDraft, value: string) => {
     setVariants((prev) =>
       prev.map((v, i) => {
@@ -100,11 +102,14 @@ export function ProductForm({ shopId, product, onSuccess, onCancel }: ProductFor
     );
   };
 
+  // TODO: Ndege remove a variant - local ui
+
   const removeVariant = (index: number) => {
     setVariants((prev) => prev.filter((_, i) => i !== index));
     setOpenValue("variant-0");
   };
 
+  // TODO: Ndege add new variant - local ui
   const addNewVariant = () => {
     const nextIndex = variants.length;
     const fresh = emptyVariant();
@@ -113,6 +118,7 @@ export function ProductForm({ shopId, product, onSuccess, onCancel }: ProductFor
     setOpenValue(`variant-${nextIndex}`);
   };
 
+  // TODO: Ndege now this is where the save is done 
   const handleSave = () => {
     if (!validate()) return;
 

@@ -44,6 +44,8 @@ export function PosScreen() {
     lowStockThreshold,
   } = usePos();
 
+  // Ndege now the complete sale is in teh hook 
+
   const [isCartOpen, setIsCartOpen] = useState(false);
 
   if (completedSale) {

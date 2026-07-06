@@ -8,6 +8,7 @@ import {
   AccordionContent,
 } from "@/components/ui/accordion";
 import type { TopSellingProduct } from "@/lib/hooks/use-inventory";
+// Ndege: gets the to selling from the hook 
 
 interface TopSellingAccordionProps {
   topSelling: TopSellingProduct[] | undefined;

@@ -165,6 +165,7 @@ export function usePos() {
   );
 
   const completeSale = () => {
+    // Ndege: this is where the sale is completed from 
     if (cart.length === 0) return;
 
     const receiptId = randomUUID();
@@ -208,3 +209,6 @@ export function usePos() {
     lowStockThreshold: LOW_STOCK_THRESHOLD,
   };
 }
+
+
+// TODO: Ndege for the pos logic and data 

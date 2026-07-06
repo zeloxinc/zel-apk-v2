@@ -160,3 +160,6 @@ export function useGroupedTransactions(receipts: EnhancedSaleReceipt[]) {
     return groups;
   }, [receipts]);
 }
+
+
+// TODO: Ndege for teh dashboard or home 

@@ -16,7 +16,7 @@ interface PinInputProps {
   onChange: (v: string) => void;
 }
 
-// TODO: Hook up the pin update functionalituy
+// TODO: Ndege Hook up the pin update functionalituy
 
 function PinInput({ label, value, onChange }: PinInputProps) {
   const inputRef = useRef<TextInput>(null);

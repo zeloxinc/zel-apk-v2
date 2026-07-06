@@ -103,3 +103,6 @@ export function useInventory() {
 
   return { catalog, loading, topSelling, reload };
 }
+
+
+// TODO: Ndege  for the products page all the inventory 

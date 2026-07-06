@@ -89,3 +89,6 @@ export function useLowStockMetrics(items: StockAlertItem[]) {
     return { totalAlerts: items.length, outOfStockCount, lowStockCount };
   }, [items]);
 }
+
+
+// TODO: Ndege for the low stock page 

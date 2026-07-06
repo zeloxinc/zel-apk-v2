@@ -22,6 +22,7 @@ import {
   useSalesDashboardStats,
   useGroupedTransactions,
 } from "@/lib/hooks/use-sales-dashboard";
+// TODO: Ndege importing the data from the hook 
 
 export function SalesDashboardScreen() {
   const { receipts } = useSalesReceipts();

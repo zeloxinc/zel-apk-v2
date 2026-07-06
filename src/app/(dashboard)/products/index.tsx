@@ -13,6 +13,3 @@ export default function ProductsRoute() {
     </View>
   );
 }
-
-// TODO: Fix teh input fonts 
-// TODO: Fix the input prefixes
