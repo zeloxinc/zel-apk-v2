@@ -6,7 +6,9 @@ import Animated, {
   withTiming,
   useSharedValue,
   withSpring,
-  SharedValue
+  useAnimatedReaction,
+  SharedValue,
+  interpolateColor,
 } from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Bell } from "lucide-react-native";
@@ -56,22 +58,42 @@ export function MobileHomeHeader({
   const logoY = useSharedValue(0);
   const identityY = useSharedValue(4);
 
-  const onScroll = (y: number) => {
-    const isScrolled = y > threshold ? 1 : 0;
-    if (isScrolled === prevScrolled.value) return;
-    prevScrolled.value = isScrolled;
+  // Watches the incoming scrollY shared value on the UI thread and
+  // drives all the derived animation values whenever it crosses `threshold`.
+  useAnimatedReaction(
+    () => activeScrollY.value,
+    (currentY) => {
+      const isScrolled = currentY > threshold ? 1 : 0;
+      if (isScrolled === prevScrolled.value) return;
+      prevScrolled.value = isScrolled;
 
-    bgOpacity.value = withTiming(isScrolled, { duration: 300 });
-    borderOpacity.value = withTiming(isScrolled, { duration: 300 });
-    logoOpacity.value = withTiming(isScrolled ? 0 : 1, { duration: 200 });
-    logoY.value = withTiming(isScrolled ? -4 : 0, { duration: 200 });
-    identityOpacity.value = withTiming(isScrolled ? 1 : 0, { duration: 200 });
-    identityY.value = withTiming(isScrolled ? 0 : 4, { duration: 200 });
-  };
+      bgOpacity.value = withTiming(isScrolled, { duration: 300 });
+      borderOpacity.value = withTiming(isScrolled, { duration: 300 });
+      logoOpacity.value = withTiming(isScrolled ? 0 : 1, { duration: 200 });
+      logoY.value = withTiming(isScrolled ? -4 : 0, { duration: 200 });
+      identityOpacity.value = withTiming(isScrolled ? 1 : 0, { duration: 200 });
+      identityY.value = withTiming(isScrolled ? 0 : 4, { duration: 200 });
+    },
+    [threshold],
+  );
 
   const containerStyle = useAnimatedStyle(() => ({
-    backgroundColor: `rgba(245, 245, 244, ${bgOpacity.value * 0.85})`,
-    borderBottomColor: `rgba(0,0,0,${borderOpacity.value * 0.06})`,
+    backgroundColor: interpolateColor(
+      bgOpacity.value,
+      [0, 1],
+      [
+        "rgba(245,245,244,0)",
+        "rgba(245,245,244,0.85)",
+      ]
+    ),
+    borderBottomColor: interpolateColor(
+      borderOpacity.value,
+      [0, 1],
+      [
+        "rgba(0,0,0,0)",
+        "rgba(0,0,0,0.06)",
+      ]
+    ),
     borderBottomWidth: 1,
   }));
 
@@ -86,6 +108,7 @@ export function MobileHomeHeader({
     transform: [{ translateY: identityY.value }],
     position: "absolute" as const,
   }));
+
 
   const tapScale = useSharedValue(1);
   const bellTap = useSharedValue(1);
@@ -107,7 +130,7 @@ export function MobileHomeHeader({
         className="w-full z-50"
         style={[containerStyle, { paddingTop: insets.top }]}
       >
-        <View className="flex-row items-center justify-between px-4 h-16">
+        <View className="flex-row items-center justify-between px-4 h-14">
           <TouchableOpacity
             onPress={onAvatarClick}
             activeOpacity={1}
@@ -144,7 +167,7 @@ export function MobileHomeHeader({
                   />
                 </View>
                 <Text
-                  className="font-sans text-base font-semibold text-neutral-900 tracking-tight"
+                  className="font-secondary text-base font-semibold text-neutral-900 tracking-tight"
                   numberOfLines={1}
                 >
                   {displayName}
