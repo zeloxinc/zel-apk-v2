@@ -10,7 +10,6 @@ import Animated from "react-native-reanimated";
 import { Images } from "@/assets";
 import { Image } from "expo-image";
 
-
 type Step = "info" | "pin";
 
 type FormErrors = {
@@ -31,7 +30,6 @@ function validatePhone(value: string) {
 
   return null;
 }
-
 
 export function SignUpScreen() {
   const router = useRouter();
@@ -126,7 +124,7 @@ export function SignUpScreen() {
       >
         {step === "info" ? (
           <View>
-            <Animated.View  className="h-16 my-6 justify-center">
+            <Animated.View className="h-16 my-6 justify-center">
               <Image
                 source={Images.zelWordBlack}
                 contentFit="contain"
@@ -135,7 +133,9 @@ export function SignUpScreen() {
               />
             </Animated.View>
 
-            <Text className="font-heading text-3xl text-neutral-900 mb-1">Hello 👋</Text>
+            <Text className="font-heading text-3xl text-neutral-900 mb-1">
+              Hello 👋
+            </Text>
             <Text className="font-heading text-xl text-neutral-900 mb-1">
               Let's create your account
             </Text>
@@ -177,7 +177,9 @@ export function SignUpScreen() {
                     fieldErrors.phone ? "border-red-400" : "border-neutral-200"
                   }`}
                 >
-                  <Text className="px-4 text-sm font-secondary text-neutral-500">+254</Text>
+                  <Text className="px-4 text-sm font-secondary text-neutral-500">
+                    +254
+                  </Text>
                   <View className="flex-1 h-full justify-center">
                     <AuthTextField
                       label=""
@@ -211,11 +213,18 @@ export function SignUpScreen() {
               />
 
               {error && (
-                <Text className="text-[13px] text-red-500 font-secondary">{error}</Text>
+                <Text className="text-[13px] text-red-500 font-secondary">
+                  {error}
+                </Text>
               )}
 
-              <Button onPress={handleInfoNext} className="h-12 rounded-2xl bg-neutral-900 mt-2">
-                <Text className="text-white font-heading text-[15px]">Continue</Text>
+              <Button
+                onPress={handleInfoNext}
+                className="h-12 rounded-2xl bg-neutral-900 mt-2"
+              >
+                <Text className="text-white font-heading text-[15px]">
+                  Continue
+                </Text>
               </Button>
 
               <View className="h-px bg-neutral-200 my-3" />
@@ -233,16 +242,18 @@ export function SignUpScreen() {
             </View>
           </View>
         ) : (
-            <View>
-              <Animated.View  className="h-16 my-6 justify-center">
-                <Image
-                  source={Images.zelWordBlack}
-                  contentFit="contain"
-                  className="w-full h-full "
-                  style={{ width: 100, height: 70 }}
-                />
-              </Animated.View>
-            <Text className="font-heading text-2xl text-neutral-900 mb-1">Set your PIN</Text>
+          <View>
+            <Animated.View className="h-16 my-6 justify-center">
+              <Image
+                source={Images.zelWordBlack}
+                contentFit="contain"
+                className="w-full h-full "
+                style={{ width: 100, height: 70 }}
+              />
+            </Animated.View>
+            <Text className="font-heading text-2xl text-neutral-900 mb-1">
+              Set your PIN
+            </Text>
             <Text className="text-[13px] text-neutral-400 font-primary mb-6">
               6 digits. You'll use this to log in every time.
             </Text>
@@ -259,7 +270,11 @@ export function SignUpScreen() {
                 <Text className="text-[11px] font-heading uppercase tracking-widest text-neutral-400 text-center">
                   Confirm PIN
                 </Text>
-                <PinInput value={confirmPin} onChange={setConfirmPin} hasError={!!error} />
+                <PinInput
+                  value={confirmPin}
+                  onChange={setConfirmPin}
+                  hasError={!!error}
+                />
               </View>
 
               {error && (
@@ -288,7 +303,9 @@ export function SignUpScreen() {
                 }}
                 className="h-9"
               >
-                <Text className="text-[13px] text-neutral-700 font-secondary">Back</Text>
+                <Text className="text-[13px] text-neutral-700 font-secondary">
+                  Back
+                </Text>
               </Button>
             </View>
           </View>
