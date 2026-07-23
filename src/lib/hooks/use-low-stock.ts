@@ -1,8 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
-import { productTypes, productVariants } from "@/lib/db/mock-data";
+import { db } from "@/lib/sqlite/db";
 
-const CRITICAL_STOCK_THRESHOLD = 100;
-// TODO: Change this to normal rates
+export const DEFAULT_LOW_STOCK_THRESHOLD = 10;
 
 export interface StockAlertItem {
   variant_id: string;
@@ -14,11 +13,10 @@ export interface StockAlertItem {
   parent_product_name: string;
 }
 
-async function wait(ms = 150) {
-  return new Promise((r) => setTimeout(r, ms));
-}
-
-export function useLowStockItems() {
+export function useLowStockItems(
+  shopId?: string,
+  threshold = DEFAULT_LOW_STOCK_THRESHOLD
+) {
   const [items, setItems] = useState<StockAlertItem[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -26,27 +24,44 @@ export function useLowStockItems() {
     let cancelled = false;
 
     async function load() {
-      await wait();
+      setLoading(true);
+      try {
+        const query = shopId
+          ? `SELECT 
+               pv.variant_id,
+               pv.variant_name,
+               pv.variant_sku,
+               pv.variant_current_stock,
+               pv.variant_selling_price,
+               pv.variant_unit_measure,
+               COALESCE(pt.product_type_name, 'Uncategorized Product') as parent_product_name
+             FROM product_variants pv
+             LEFT JOIN product_types pt ON pv.variant_product_type_id = pt.product_type_id
+             WHERE pv.variant_shop_id = ? AND pv.variant_current_stock <= ?
+             ORDER BY pv.variant_current_stock ASC`
+          : `SELECT 
+               pv.variant_id,
+               pv.variant_name,
+               pv.variant_sku,
+               pv.variant_current_stock,
+               pv.variant_selling_price,
+               pv.variant_unit_measure,
+               COALESCE(pt.product_type_name, 'Uncategorized Product') as parent_product_name
+             FROM product_variants pv
+             LEFT JOIN product_types pt ON pv.variant_product_type_id = pt.product_type_id
+             WHERE pv.variant_current_stock <= ?
+             ORDER BY pv.variant_current_stock ASC`;
 
-      const productMap = new Map(
-        productTypes.map((p) => [p.product_type_id, p.product_type_name]),
-      );
+        const params = shopId ? [shopId, threshold] : [threshold];
+        const alerts = await db.selectAll<StockAlertItem>(query, params);
 
-      const alerts: StockAlertItem[] = productVariants
-        .filter((v) => v.variant_current_stock <= CRITICAL_STOCK_THRESHOLD)
-        .map((v) => ({
-          variant_id: v.variant_id,
-          variant_name: v.variant_name,
-          variant_sku: v.variant_sku,
-          variant_current_stock: v.variant_current_stock,
-          variant_selling_price: v.variant_selling_price,
-          variant_unit_measure: v.variant_unit_measure,
-          parent_product_name: productMap.get(v.variant_product_type_id) ?? "Uncategorized Product",
-        }));
-
-      if (!cancelled) {
-        setItems(alerts);
-        setLoading(false);
+        if (!cancelled) {
+          setItems(alerts);
+          setLoading(false);
+        }
+      } catch (error) {
+        console.error("Failed to load low stock items from SQLite:", error);
+        if (!cancelled) setLoading(false);
       }
     }
 
@@ -54,32 +69,33 @@ export function useLowStockItems() {
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [shopId, threshold]);
 
   const updateStock = (variantId: string, delta: number) => {
     setItems((prev) =>
       prev
         .map((item) =>
           item.variant_id === variantId
-            ? { ...item, variant_current_stock: item.variant_current_stock + delta }
-            : item,
+            ? {
+                ...item,
+                variant_current_stock: item.variant_current_stock + delta,
+              }
+            : item
         )
-        // Item may rise above threshold after restock — drop it from the alert list
-        .filter((item) => item.variant_current_stock <= CRITICAL_STOCK_THRESHOLD),
+        .filter((item) => item.variant_current_stock <= threshold)
     );
   };
 
-  return { items, loading, updateStock, threshold: CRITICAL_STOCK_THRESHOLD };
+  return { items, loading, updateStock, threshold };
 }
 
 export function useLowStockMetrics(items: StockAlertItem[]) {
   return useMemo(() => {
     let outOfStockCount = 0;
-    let lowStockCount = 10;
+    let lowStockCount = 0;
 
     items.forEach((item) => {
-      // TODO: Check on 0  and make it user set
-      if (item.variant_current_stock < 8) {
+      if (item.variant_current_stock <= 0) {
         outOfStockCount++;
       } else {
         lowStockCount++;
@@ -89,6 +105,3 @@ export function useLowStockMetrics(items: StockAlertItem[]) {
     return { totalAlerts: items.length, outOfStockCount, lowStockCount };
   }, [items]);
 }
-
-
-// TODO: Ndege for the low stock page 

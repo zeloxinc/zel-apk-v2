@@ -6,8 +6,7 @@ import {
   Platform,
   Pressable,
 } from "react-native";
-import { useRouter } from "expo-router";
-import { Link } from "expo-router";
+import { useRouter, Link } from "expo-router";
 import { Button } from "@/components/ui/button";
 import { Text } from "@/components/ui/text";
 import { AuthTextField } from "./auth-text-field";
@@ -15,6 +14,10 @@ import { PinInput } from "./pin-input";
 import Animated from "react-native-reanimated";
 import { Images } from "@/assets";
 import { Image } from "expo-image";
+import { supabase } from "@/lib/db/supabase";
+import { seedLocalDatabase } from "@/lib/sqlite/fetchAllData";
+import { db } from "@/lib/sqlite/db";      // 1. Authenticate & Create User in Supabase
+
 
 type Step = "email" | "pin";
 
@@ -28,7 +31,8 @@ export function LoginScreen() {
   const [isLoading, setIsLoading] = useState(false);
 
   function handleEmailContinue() {
-    if (!email.trim() || !email.includes("@")) {
+    const formattedEmail = email.trim().toLowerCase();
+    if (!formattedEmail || !formattedEmail.includes("@")) {
       setError("Enter a valid email address.");
       return;
     }
@@ -41,26 +45,41 @@ export function LoginScreen() {
       setError("Enter all 4 digits.");
       return;
     }
-
+  
     setIsLoading(true);
     setError(null);
-
+  
     try {
-      // TODO(ndege): pin pad will change to 4 digits 
-
-      // TODO: Ndege wire real login flow
-     
-      //  Route by role
-      await new Promise((resolve) => setTimeout(resolve, 600));
-
-      router.push("/");
+      const cleanEmail = email.trim().toLowerCase();
+  
+      // 1. Authenticate with Supabase
+      const { data, error: authError } = await supabase.auth.signInWithPassword({
+        email: cleanEmail,
+        password: pin,
+      });
+  
+      if (authError) {
+        throw new Error(authError.message);
+      }
+  
+      if (data.session) {
+        // 2. Sync local SQLite database & retrieve active shop ID
+        const activeShopId = await seedLocalDatabase(data.session.user.id);
+  
+        // 3. Route dynamically based on shop association
+        if (activeShopId) {
+          router.replace("/");
+        } else {
+          router.replace("/(auth)/choose-path");
+        }
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : "Something went wrong.");
     } finally {
       setIsLoading(false);
     }
   }
-
+  
   return (
     <KeyboardAvoidingView
       behavior={Platform.OS === "ios" ? "padding" : undefined}
@@ -69,17 +88,17 @@ export function LoginScreen() {
       <View className="h-[3px] w-full bg-black" />
 
       <ScrollView
-        contentContainerClassName="flex-1 px-6 py-16 justify-center"
+        contentContainerClassName="flex-grow px-6 py-16 justify-center"
         keyboardShouldPersistTaps="handled"
       >
         <Animated.View className="h-16 my-6 justify-center">
           <Image
             source={Images.zelWordBlack}
             contentFit="contain"
-            className="w-full h-full "
-            style={{ width: 100, height: 70 }}
+            style={{ width: 100, height: 60 }}
           />
         </Animated.View>
+
         {step === "email" ? (
           <View className="gap-1 mb-8">
             <Text className="font-heading text-3xl text-neutral-900">
@@ -112,6 +131,7 @@ export function LoginScreen() {
             </View>
           </View>
         )}
+
         {step === "email" ? (
           <View className="gap-4">
             <AuthTextField

@@ -1,7 +1,13 @@
-import { useState } from "react";
-import { View, ScrollView, KeyboardAvoidingView, Platform } from "react-native";
-import { useRouter } from "expo-router";
-import { Link } from "expo-router";
+import { use, useState } from "react";
+import {
+  View,
+  ScrollView,
+  KeyboardAvoidingView,
+  Platform,
+  TextInput,
+  Pressable,
+} from "react-native";
+import { useRouter, Link } from "expo-router";
 import { Button } from "@/components/ui/button";
 import { Text } from "@/components/ui/text";
 import { AuthTextField } from "./auth-text-field";
@@ -9,7 +15,8 @@ import { PinInput } from "./pin-input";
 import Animated from "react-native-reanimated";
 import { Images } from "@/assets";
 import { Image } from "expo-image";
-
+import { supabase } from "@/lib/db/supabase";
+import { db } from "@/lib/sqlite/db";
 
 type Step = "info" | "pin";
 
@@ -31,7 +38,6 @@ function validatePhone(value: string) {
 
   return null;
 }
-
 
 export function SignUpScreen() {
   const router = useRouter();
@@ -76,7 +82,7 @@ export function SignUpScreen() {
 
     if (!email.trim()) {
       errors.email = "Email address is required.";
-    } else if (!/^\S+@\S+\.\S+$/.test(email)) {
+    } else if (!/^\S+@\S+\.\S+$/.test(email.trim())) {
       errors.email = "Enter a valid email address.";
     }
 
@@ -92,55 +98,109 @@ export function SignUpScreen() {
       setError("Enter all 6 PIN digits.");
       return;
     }
-
+  
     if (pin !== confirmPin) {
       setError("PINs don't match. Try again.");
       return;
     }
-
+  
     setIsLoading(true);
     setError(null);
-
+  
+    const cleanEmail = email.trim().toLowerCase();
+    const fullName = `${firstName.trim()} ${lastName.trim()}`;
+    const formattedPhone = `+254${phone}`;
+  
     try {
-      // TODO: Ndege wire real signup  auth.signUp({ email, password: pin }),
-      // then insert into staff_profiles with profile_full_name / profile_phone_number.
-      // Also persist locally
-      await new Promise((resolve) => setTimeout(resolve, 600));
-
-      router.push("/choose-path");
+      const { data: authData, error: authError } = await supabase.auth.signUp({
+        email: cleanEmail,
+        password: pin,
+        options: {
+          data: {
+            full_name: fullName,
+            phone_number: formattedPhone,
+          },
+        },
+      });
+  
+      if (authError) throw new Error(authError.message);
+  
+      const user = authData.user;
+      if (!user) throw new Error("Account creation failed. Please try again.");
+  
+      const { error: profileError } = await supabase
+        .from("staff_profiles")
+        .upsert({
+          profile_user_id: user.id, 
+          profile_full_name: fullName,
+          profile_phone_number: formattedPhone,
+          // updated_at: new Date().toISOString(),
+        });
+  
+      if (profileError) {
+        console.warn("Profile creation warning:", profileError.message);
+      }
+  
+      await db.run(
+        `INSERT OR REPLACE INTO profiles (
+          profile_user_id, 
+          staff_id, 
+          profile_full_name, 
+          role_name, 
+          shop_id
+        ) VALUES (?, ?, ?, ?, ?)`,
+        [
+          user.id,
+          user.id,             
+          fullName,
+          "OWNER",             
+          "pending_shop_id"   
+        ]
+      );
+  
+      await db.run(
+        `INSERT OR REPLACE INTO settings (key, value) VALUES (?, ?), (?, ?)`,
+        [
+          "user_email", cleanEmail,
+          "user_phone", formattedPhone
+        ]
+      );
+  
+      router.replace("/choose-path");
     } catch (err) {
       setError(err instanceof Error ? err.message : "Something went wrong.");
     } finally {
       setIsLoading(false);
     }
   }
-
+  
   return (
     <KeyboardAvoidingView
       behavior={Platform.OS === "ios" ? "padding" : undefined}
       className="flex-1 bg-white"
     >
       <ScrollView
-        contentContainerClassName="px-6 pt-16 pb-8"
+        contentContainerClassName="flex-grow px-6 pt-16 pb-8 justify-center"
         keyboardShouldPersistTaps="handled"
       >
+        <Animated.View className="h-16 my-4 justify-center">
+          <Image
+            source={Images.zelWordBlack}
+            contentFit="contain"
+            style={{ width: 100, height: 60 }}
+          />
+        </Animated.View>
+
         {step === "info" ? (
           <View>
-            <Animated.View  className="h-16 my-6 justify-center">
-              <Image
-                source={Images.zelWordBlack}
-                contentFit="contain"
-                className="w-full h-full "
-                style={{ width: 100, height: 70 }}
-              />
-            </Animated.View>
-
-            <Text className="font-heading text-3xl text-neutral-900 mb-1">Hello 👋</Text>
+            <Text className="font-heading text-3xl text-neutral-900 mb-1">
+              Hello 👋
+            </Text>
             <Text className="font-heading text-xl text-neutral-900 mb-1">
               Let's create your account
             </Text>
             <Text className="text-sm font-primary text-neutral-500 mb-6">
-              Sell, track stock, manage your shop from anywhere
+              Sell, track stock, and manage your shop from anywhere.
             </Text>
 
             <View className="gap-4">
@@ -168,26 +228,29 @@ export function SignUpScreen() {
                 error={fieldErrors.lastName}
               />
 
+              {/* Custom Phone Field with Prefix */}
               <View className="gap-1.5">
                 <Text className="text-xs font-heading uppercase tracking-wide text-neutral-500">
                   Phone number
                 </Text>
                 <View
-                  className={`flex-row items-center h-12 rounded-xl border bg-neutral-50 overflow-hidden ${
+                  className={`flex-row items-center h-12 rounded-xl border bg-neutral-50 px-3 ${
                     fieldErrors.phone ? "border-red-400" : "border-neutral-200"
                   }`}
                 >
-                  <Text className="px-4 text-sm font-secondary text-neutral-500">+254</Text>
-                  <View className="flex-1 h-full justify-center">
-                    <AuthTextField
-                      label=""
-                      placeholder="712345678"
-                      keyboardType="numeric"
-                      maxLength={9}
-                      value={phone}
-                      onChangeText={handlePhoneChange}
-                    />
-                  </View>
+                  <Text className="text-sm font-secondary text-neutral-500 mr-2">
+                    +254
+                  </Text>
+                  <View className="h-4 w-px bg-neutral-300 mr-3" />
+                  <TextInput
+                    placeholder="712345678"
+                    placeholderTextColor="#A3A3A3"
+                    keyboardType="numeric"
+                    maxLength={9}
+                    value={phone}
+                    onChangeText={handlePhoneChange}
+                    className="flex-1 h-full text-neutral-900 font-primary text-sm"
+                  />
                 </View>
                 {fieldErrors.phone && (
                   <Text className="text-[11px] text-red-500 font-heading">
@@ -211,11 +274,18 @@ export function SignUpScreen() {
               />
 
               {error && (
-                <Text className="text-[13px] text-red-500 font-secondary">{error}</Text>
+                <Text className="text-[13px] text-red-500 font-secondary">
+                  {error}
+                </Text>
               )}
 
-              <Button onPress={handleInfoNext} className="h-12 rounded-2xl bg-neutral-900 mt-2">
-                <Text className="text-white font-heading text-[15px]">Continue</Text>
+              <Button
+                onPress={handleInfoNext}
+                className="h-12 rounded-2xl bg-neutral-900 mt-2"
+              >
+                <Text className="text-white font-heading text-[15px]">
+                  Continue
+                </Text>
               </Button>
 
               <View className="h-px bg-neutral-200 my-3" />
@@ -225,24 +295,20 @@ export function SignUpScreen() {
                   Already have an account?
                 </Text>
                 <Link href="/login" asChild>
-                  <Text className="text-[13px] text-neutral-900 font-heading ml-1 underline">
-                    Login
-                  </Text>
+                  <Pressable>
+                    <Text className="text-[13px] text-neutral-900 font-heading ml-1 underline">
+                      Login
+                    </Text>
+                  </Pressable>
                 </Link>
               </View>
             </View>
           </View>
         ) : (
-            <View>
-              <Animated.View  className="h-16 my-6 justify-center">
-                <Image
-                  source={Images.zelWordBlack}
-                  contentFit="contain"
-                  className="w-full h-full "
-                  style={{ width: 100, height: 70 }}
-                />
-              </Animated.View>
-            <Text className="font-heading text-2xl text-neutral-900 mb-1">Set your PIN</Text>
+          <View>
+            <Text className="font-heading text-2xl text-neutral-900 mb-1">
+              Set your PIN
+            </Text>
             <Text className="text-[13px] text-neutral-400 font-primary mb-6">
               6 digits. You'll use this to log in every time.
             </Text>
@@ -259,7 +325,11 @@ export function SignUpScreen() {
                 <Text className="text-[11px] font-heading uppercase tracking-widest text-neutral-400 text-center">
                   Confirm PIN
                 </Text>
-                <PinInput value={confirmPin} onChange={setConfirmPin} hasError={!!error} />
+                <PinInput
+                  value={confirmPin}
+                  onChange={setConfirmPin}
+                  hasError={!!error}
+                />
               </View>
 
               {error && (
@@ -288,7 +358,9 @@ export function SignUpScreen() {
                 }}
                 className="h-9"
               >
-                <Text className="text-[13px] text-neutral-700 font-secondary">Back</Text>
+                <Text className="text-[13px] text-neutral-700 font-secondary">
+                  Back
+                </Text>
               </Button>
             </View>
           </View>

@@ -7,6 +7,8 @@ import { StatusBar } from "expo-status-bar";
 import { ThemeProvider } from "expo-router/react-navigation"; 
 import React, { useEffect, useState } from "react";
 import { View } from "react-native";
+import { checkAuthStatus } from "@/lib/hooks/outh-check";
+import { useRouter } from "expo-router";
 
 import { vars, useColorScheme } from "nativewind";                          
 
@@ -66,7 +68,18 @@ const DARK_THEME = {
 };
 
 export default function RootLayout() {
-  const {setColorScheme, colorScheme } = useColorScheme(); 
+  const router = useRouter();
+  
+    useEffect(() => {
+      async function determineRoute() {
+        const targetRoute = await checkAuthStatus();
+        router.replace(targetRoute);
+      }
+  
+      determineRoute();
+    }, [router]);
+  
+  const { setColorScheme, colorScheme } = useColorScheme(); 
   const [isMounted, setIsMounted] = useState(false);
 
   // Makes the theme default to light always

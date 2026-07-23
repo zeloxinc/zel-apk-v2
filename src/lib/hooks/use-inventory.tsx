@@ -1,9 +1,5 @@
-import { useEffect, useMemo, useState } from "react";
-import {
-  productTypes,
-  productVariants,
-  saleItems,
-} from "@/lib/db/mock-data";
+import { useEffect, useState } from "react";
+import { db } from "@/lib/sqlite/db";
 
 export interface InventoryVariant {
   variant_id: string;
@@ -29,12 +25,9 @@ export interface TopSellingProduct {
   sold: number;
 }
 
-async function wait(ms = 150) {
-  return new Promise((r) => setTimeout(r, ms));
-}
-
-export function useInventory() {
+export function useInventory(shopId?: string) {
   const [catalog, setCatalog] = useState<ProductWithVariants[]>([]);
+  const [topSelling, setTopSelling] = useState<TopSellingProduct[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshKey, setRefreshKey] = useState(0);
 
@@ -43,24 +36,62 @@ export function useInventory() {
 
     async function load() {
       setLoading(true);
-      await wait();
+      try {
+        // Fetch all product categories
+        const types = await db.selectAll<{
+          product_type_id: string;
+          product_type_name: string;
+        }>(`SELECT product_type_id, product_type_name FROM product_types`);
 
-      const grouped: ProductWithVariants[] = productTypes.map((pt) => {
-        const variants = productVariants.filter(
-          (v) => v.variant_product_type_id === pt.product_type_id,
-        ) as InventoryVariant[];
+        // Fetch variants for the active shop
+        const query = shopId
+          ? `SELECT * FROM product_variants WHERE variant_shop_id = ?`
+          : `SELECT * FROM product_variants`;
+        const params = shopId ? [shopId] : [];
+        const variants = await db.selectAll<InventoryVariant>(query, params);
 
-        return {
-          product_id: pt.product_type_id,
-          product_name: pt.product_type_name,
-          variants,
-          totalStock: variants.reduce((sum, v) => sum + v.variant_current_stock, 0),
-        };
-      });
+        // Map variants to their parent products
+        const grouped: ProductWithVariants[] = types.map((pt) => {
+          const ptVariants = variants.filter(
+            (v) => v.variant_product_type_id === pt.product_type_id
+          );
+          return {
+            product_id: pt.product_type_id,
+            product_name: pt.product_type_name,
+            variants: ptVariants,
+            totalStock: ptVariants.reduce(
+              (sum, v) => sum + v.variant_current_stock,
+              0
+            ),
+          };
+        });
 
-      if (!cancelled) {
-        setCatalog(grouped);
-        setLoading(false);
+        // Top selling products calculated via SQL aggregate
+        const topRows = await db.selectAll<{
+          product_id: string;
+          product_name: string;
+          sold: number;
+        }>(
+          `SELECT 
+             pt.product_type_id as product_id,
+             pt.product_type_name as product_name,
+             SUM(si.sale_item_quantity) as sold
+           FROM sale_items si
+           JOIN product_variants pv ON si.sale_item_variant_id = pv.variant_id
+           JOIN product_types pt ON pv.variant_product_type_id = pt.product_type_id
+           GROUP BY pt.product_type_id, pt.product_type_name
+           ORDER BY sold DESC
+           LIMIT 5`
+        );
+
+        if (!cancelled) {
+          setCatalog(grouped);
+          setTopSelling(topRows);
+          setLoading(false);
+        }
+      } catch (error) {
+        console.error("Failed to load inventory from SQLite:", error);
+        if (!cancelled) setLoading(false);
       }
     }
 
@@ -68,41 +99,9 @@ export function useInventory() {
     return () => {
       cancelled = true;
     };
-  }, [refreshKey]);
-
-  const topSelling: TopSellingProduct[] | undefined = useMemo(() => {
-    if (loading) return undefined;
-
-    const variantToProduct = new Map(
-      productVariants.map((v) => [v.variant_id, v.variant_product_type_id]),
-    );
-    const productNameMap = new Map(
-      productTypes.map((p) => [p.product_type_id, p.product_type_name]),
-    );
-
-    const soldMap = new Map<string, number>();
-
-    saleItems.forEach((item) => {
-      const productId = variantToProduct.get(item.sale_item_variant_id);
-      if (!productId) return;
-
-      soldMap.set(productId, (soldMap.get(productId) || 0) + item.sale_item_quantity);
-    });
-
-    return Array.from(soldMap.entries())
-      .map(([product_id, sold]) => ({
-        product_id,
-        product_name: productNameMap.get(product_id) ?? "Unknown",
-        sold,
-      }))
-      .sort((a, b) => b.sold - a.sold)
-      .slice(0, 5);
-  }, [loading]);
+  }, [refreshKey, shopId]);
 
   const reload = () => setRefreshKey((k) => k + 1);
 
   return { catalog, loading, topSelling, reload };
 }
-
-
-// TODO: Ndege  for the products page all the inventory 

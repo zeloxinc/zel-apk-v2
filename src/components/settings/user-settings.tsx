@@ -10,6 +10,9 @@ import {
   Switch,
 } from "react-native";
 import { WifiOff, LogOut, UserCircle } from "lucide-react-native";
+import { signOut } from "@/lib/hooks/sign-out";
+import { db } from "@/lib/sqlite/db";
+import { router } from "expo-router";
 
 const MOCK_PROFILE = {
   profile_user_id: "usr_001",
@@ -110,21 +113,50 @@ export function UserSettings() {
   };
 
   const handleLogout = () => {
-    Alert.alert(
-      "Log Out",
-      "Are you sure you want to log out? You'll need to sign back in.",
-      [
-        { text: "Cancel", style: "cancel" },
-        {
-          text: "Log Out",
-          style: "destructive",
-          // TODO: Ndege the logout functionality
-          onPress: () => Alert.alert("Logged out", "Session cleared."),
-        },
-      ]
-    );
-  };
-
+      Alert.alert(
+        "Log Out",
+        "Are you sure you want to log out? Any unsynced data will be backed up prior to signing out.",
+        [
+          { text: "Cancel", style: "cancel" },
+          {
+            text: "Log Out",
+            style: "destructive",
+            onPress: async () => {
+              try {
+                await signOut(db);
+                Alert.alert("Logged Out", "Session cleared and local cache purged.");
+                router.replace("/(auth)/login")
+              } catch (err: any) {
+                if (err?.message === "SYNC_PHASE_FAILED") {
+                  Alert.alert(
+                    "Sync Failed",
+                    "Could not sync local changes to the cloud. Do you want to force log out anyway? (Unsynced local changes may be lost)",
+                    [
+                      { text: "Cancel", style: "cancel" },
+                      {
+                        text: "Force Log Out",
+                        style: "destructive",
+                        onPress: async () => {
+                          try {
+                            await signOut(db, { force: true });
+                            Alert.alert("Logged Out", "Session cleared forcefully.");
+                          } catch (forceErr) {
+                            Alert.alert("Error", "Failed to clear local database cache.");
+                          }
+                        },
+                      },
+                    ]
+                  );
+                } else {
+                  Alert.alert("Sign Out Failed", "Could not complete sign out sequence.");
+                }
+              }
+            },
+          },
+        ]
+      );
+    };
+  
   return (
     <ScrollView
       className="flex-1"
