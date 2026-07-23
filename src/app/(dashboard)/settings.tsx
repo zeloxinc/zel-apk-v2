@@ -37,7 +37,8 @@ function AvatarCircle({ name, size = 64 }: { name: string; size?: number }) {
     .slice(0, 2)
     .join("")
     .toUpperCase();
-  const hue = safeName.split("").reduce((acc, c) => acc + c.charCodeAt(0), 0) % 360;
+  const hue =
+    safeName.split("").reduce((acc, c) => acc + c.charCodeAt(0), 0) % 360;
 
   return (
     <View
@@ -50,7 +51,13 @@ function AvatarCircle({ name, size = 64 }: { name: string; size?: number }) {
         justifyContent: "center",
       }}
     >
-      <Text style={{ fontSize: size * 0.33, fontWeight: "700", color: `hsl(${hue}, 40%, 25%)` }}>
+      <Text
+        style={{
+          fontSize: size * 0.33,
+          fontWeight: "700",
+          color: `hsl(${hue}, 40%, 25%)`,
+        }}
+      >
         {initials}
       </Text>
     </View>
@@ -58,11 +65,41 @@ function AvatarCircle({ name, size = 64 }: { name: string; size?: number }) {
 }
 
 const ALL_SECTIONS = [
-  { id: "shop",          label: "Shop Settings",   icon: Store,        component: ShopSettings,         ownerOnly: true  },
-  { id: "user",          label: "User Profile",    icon: User,         component: UserSettings,         ownerOnly: false },
-  { id: "notifications", label: "Notifications",   icon: Bell,         component: NotificationSettings, ownerOnly: false },
-  { id: "theme",         label: "Theme",           icon: SunMoon,      component: ThemeSettings,        ownerOnly: false },
-  { id: "security",      label: "Security PIN",    icon: ShieldCheck,  component: SecuritySettings,     ownerOnly: false },
+  {
+    id: "shop",
+    label: "Shop Settings",
+    icon: Store,
+    component: ShopSettings,
+    ownerOnly: true,
+  },
+  {
+    id: "user",
+    label: "User Profile",
+    icon: User,
+    component: UserSettings,
+    ownerOnly: false,
+  }
+  // {
+  //   id: "notifications",
+  //   label: "Notifications",
+  //   icon: Bell,
+  //   component: NotificationSettings,
+  //   ownerOnly: false,
+  // },
+  // {
+  //   id: "theme",
+  //   label: "Theme",
+  //   icon: SunMoon,
+  //   component: ThemeSettings,
+  //   ownerOnly: false,
+  // },
+  // {
+  //   id: "security",
+  //   label: "Security PIN",
+  //   icon: ShieldCheck,
+  //   component: SecuritySettings,
+  //   ownerOnly: false,
+  // },
 ] as const;
 
 type SectionId = (typeof ALL_SECTIONS)[number]["id"];
@@ -72,17 +109,20 @@ function TabletLayout({
   active,
   onSelect,
 }: {
-  sections: typeof ALL_SECTIONS[number][];
+  sections: (typeof ALL_SECTIONS)[number][];
   active: SectionId;
   onSelect: (id: SectionId) => void;
 }) {
-  const ActiveComponent = sections.find((s) => s.id === active)?.component ?? null;
+  const ActiveComponent =
+    sections.find((s) => s.id === active)?.component ?? null;
 
   return (
     <View className="flex-1 flex-row">
       <View className="w-72 bg-card border-r border-border">
         <View className="px-5 pt-6 pb-4 border-b border-border">
-          <Text className="text-xl font-bold text-foreground font-heading">Settings</Text>
+          <Text className="text-xl font-bold text-foreground font-heading">
+            Settings
+          </Text>
           <Text className="text-xs text-muted-foreground font-primary mt-0.5">
             Manage configuration
           </Text>
@@ -103,7 +143,9 @@ function TabletLayout({
                 <Icon size={18} color={isActive ? "#ffffff" : "#6b7280"} />
                 <Text
                   className={`text-sm font-semibold font-secondary ${
-                    isActive ? "text-primary-foreground" : "text-muted-foreground"
+                    isActive
+                      ? "text-primary-foreground"
+                      : "text-muted-foreground"
                   }`}
                 >
                   {s.label}
@@ -114,7 +156,10 @@ function TabletLayout({
         </ScrollView>
       </View>
 
-      <ScrollView className="flex-1 bg-background" contentContainerStyle={{ padding: 32 }}>
+      <ScrollView
+        className="flex-1 bg-background"
+        contentContainerStyle={{ padding: 32 }}
+      >
         {ActiveComponent ? (
           <ActiveComponent />
         ) : (
@@ -144,6 +189,27 @@ export default function SettingsScreen() {
   const [shop, setShop] = useState<LocalShop | null>(null);
   const [loading, setLoading] = useState(true);
 
+  const [syncing, setSyncing] = useState(false);
+  const [isSyncDisabled, setIsSyncDisabled] = useState(false);
+  
+  const handleSync = async () => {
+    try {
+      setSyncing(true);
+      setIsSyncDisabled(true);
+  // Ndege
+      // Handle the sync/API call here
+      await new Promise((resolve) => setTimeout(resolve, 2000));
+  
+      // Handle success logic here
+    } catch (error) {
+      // Handle error logic here
+    } finally {
+      setSyncing(false);
+      setIsSyncDisabled(false);
+    }
+  };
+
+  
   const scrollY = useSharedValue(0);
 
   useEffect(() => {
@@ -153,11 +219,11 @@ export default function SettingsScreen() {
 
         // Query using your custom `db` helper matching your `shops` & `profiles` schema
         const shopResult = await db.selectFirst<LocalShop>(
-          `SELECT shop_id, shop_name FROM shops LIMIT 1;`
+          `SELECT shop_id, shop_name FROM shops LIMIT 1;`,
         );
 
         const profileResult = await db.selectFirst<LocalProfile>(
-          `SELECT profile_user_id, staff_id, profile_full_name, role_name, shop_id FROM profiles LIMIT 1;`
+          `SELECT profile_user_id, staff_id, profile_full_name, role_name, shop_id FROM profiles LIMIT 1;`,
         );
 
         if (shopResult) setShop(shopResult);
@@ -205,17 +271,48 @@ export default function SettingsScreen() {
           <View className="px-5">
             {/* Dynamic User Profile Header */}
             <View className="mb-7">
-              <AvatarCircle name={profile?.profile_full_name || "User"} size={60} />
+              <AvatarCircle
+                name={profile?.profile_full_name || "User"}
+                size={60}
+              />
               <Text className="text-xl text-foreground font-heading mt-3">
                 {shop?.shop_name || "My Shop"}
               </Text>
               <Text className="text-xs font-medium text-muted-foreground font-primary mt-0.5">
-                {profile?.profile_full_name || "Staff Member"} · {profile?.role_name || "CASHIER"}
+                {profile?.profile_full_name || "Staff Member"} ·{" "}
+                {profile?.role_name || "CASHIER"}
               </Text>
             </View>
 
             {/* Dynamic Accordion list */}
-            <MobileSettingsAccordion sections={allowedSections as any} />
+              <MobileSettingsAccordion sections={allowedSections as any} />
+              <TouchableOpacity
+                          onPress={handleSync}
+                          disabled={isSyncDisabled}
+                          activeOpacity={0.8}
+                          className={`flex-1 h-11 rounded-xl flex-row items-center justify-center space-x-2 ${
+                            isSyncDisabled ? "bg-muted" : "bg-primary"
+                          }`}
+                        >
+                          {syncing ? (
+                            <>
+                              <ActivityIndicator color="#ffffff" size="small" />
+                              <Text className="text-sm font-semibold font-secondary text-primary-foreground ml-2">
+                                Syncing...
+                              </Text>
+                            </>
+                          ) : (
+                            <>
+                              <Text
+                                className={`text-sm font-semibold font-secondary ${
+                                  isSyncDisabled ? "text-muted-foreground" : "text-primary-foreground"
+                                }`}
+                              >
+                                Sync Data
+                              </Text>
+                            </>
+                          )}
+                        </TouchableOpacity>
           </View>
         </ScrollView>
       )}
