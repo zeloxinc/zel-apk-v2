@@ -32,7 +32,9 @@ export async function uplinkSales(
 
     if (receiptError) {
       if (receiptError.code === "23503") {
-        console.warn(`[Sync Uplink] Skipping receipt ${receipt.receipt_id} due to structural foreign key constraints.`);
+        console.warn(`[Sync Uplink] Marking receipt ${receipt.receipt_id} as failed due to foreign key constraints.`);
+        // Flag as failed (-1) locally so it doesn't block future sync cycles indefinitely
+        await db.runAsync("UPDATE sale_receipts SET synced = -1 WHERE receipt_id = ?", receipt.receipt_id);
         hasValidationFailure = true;
         continue;
       }
