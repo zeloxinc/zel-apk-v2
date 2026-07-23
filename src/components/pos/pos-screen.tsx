@@ -78,7 +78,7 @@ export function PosScreen() {
               placeholder="Search products, SKU, or variant..."
               value={searchQuery}
               onChangeText={handleSearchChange}
-              className="text-sm bg-card h-11 px-3 rounded-lg border border-border text-foreground"
+              className="text-sm bg-card font-primary h-11 px-3 rounded-lg border border-border text-foreground"
               placeholderTextColor="#a3a3a3"
             />
 
@@ -89,7 +89,7 @@ export function PosScreen() {
                     key={category}
                     variant={selectedCategory === category ? "default" : "outline"}
                     onPress={() => handleCategorySelect(category)}
-                    className="rounded-full px-4 h-8"
+                    className="rounded-full px-4 py-2"
                   >
                     <Text
                       className={`text-sm font-secondary ${
