@@ -34,13 +34,10 @@ const emptyVariant = (): VariantDraft => ({
 });
 
 function computeSku(productName: string, variantName: string, index: number): string {
-  const baseProduct = productName.trim().replace(/[^a-zA-Z0-9]/g, "").substring(0, 3).toUpperCase();
-  const baseVariant = variantName.trim().replace(/[^a-zA-Z0-9]/g, "").substring(0, 3).toUpperCase();
-
-  const productPart = baseProduct.padEnd(3, "X");
-  const variantPart = baseVariant.length > 0 ? baseVariant.padEnd(3, "X") : `V0${index + 1}`;
-
-  return `${productPart}-${variantPart}`;
+  const baseProduct = productName.trim().replace(/[^a-zA-Z0-9]/g, "").substring(0, 3).toUpperCase().padEnd(3, "X");
+  const baseVariant = variantName.trim().replace(/[^a-zA-Z0-9]/g, "").substring(0, 3).toUpperCase().padEnd(3, "VAR");
+  
+  return `${baseProduct}-${baseVariant}-${String(index + 1).padStart(2, "0")}`;
 }
 
 interface ProductFormProps {
@@ -89,11 +86,21 @@ export function ProductForm({ shopId, product, onSuccess, onCancel }: ProductFor
   const validate = () => {
     const e: Record<string, string> = {};
     if (!productName.trim()) e.productName = "Product name is required";
+    
     variants.forEach((v, i) => {
       if (!v.variant_name.trim()) e[`v${i}_name`] = "Required";
-      if (!v.variant_selling_price) e[`v${i}_sell`] = "Required";
-      if (!v.variant_buying_price) e[`v${i}_buy`] = "Required";
+      
+      const buyPrice = parseFloat(v.variant_buying_price);
+      if (!v.variant_buying_price || isNaN(buyPrice) || buyPrice < 0) {
+        e[`v${i}_buy`] = "Invalid price";
+      }
+      
+      const sellPrice = parseFloat(v.variant_selling_price);
+      if (!v.variant_selling_price || isNaN(sellPrice) || sellPrice < 0) {
+        e[`v${i}_sell`] = "Invalid price";
+      }
     });
+    
     setErrors(e);
     return Object.keys(e).length === 0;
   };

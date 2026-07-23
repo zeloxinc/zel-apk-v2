@@ -166,7 +166,6 @@ export const getDatabase = (): Promise<SQLite.SQLiteDatabase> => {
   return dbPromise;
 };
 
-// ... inside db.ts
 
 export const db = {
   async selectAll<T>(query: string, params: unknown[] = []): Promise<T[]> {
