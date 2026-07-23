@@ -141,6 +141,7 @@ export function ProductForm({ shopId, product, onSuccess, onCancel }: ProductFor
       variant_selling_price: parseFloat(v.variant_selling_price) || 0,
       variant_unit_measure: v.variant_unit_measure,
       variant_current_stock: parseInt(v.variant_current_stock, 10) || 0,
+      synced: false, 
     }));
 
     onSuccess({
@@ -177,7 +178,12 @@ export function ProductForm({ shopId, product, onSuccess, onCancel }: ProductFor
             </View>
           </View>
 
-          <Accordion type="single" value={openValue} onValueChange={setOpenValue} className="gap-3">
+          <Accordion
+            type="single"
+            value={openValue}
+            onValueChange={(val) => setOpenValue(val ?? "")}
+            className="gap-3"
+          >
             {variants.map((v, i) => {
               const hasError = errors[`v${i}_name`] || errors[`v${i}_buy`] || errors[`v${i}_sell`];
               const nameDisplay = v.variant_name.trim() || `Variant ${i + 1}`;
