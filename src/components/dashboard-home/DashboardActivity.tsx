@@ -55,7 +55,7 @@ export function DashboardActivity({ items }: Props) {
             shadowRadius: 2,
           }}
         >
-          <Text className="font-primary text-sm font-bold text-neutral-700">
+          <Text className="font-heading text-sm  text-neutral-700">
             No activity yet
           </Text>
           <Text className="font-primary text-xs text-neutral-400 mt-1 text-center max-w-[220px] leading-normal">

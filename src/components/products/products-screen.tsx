@@ -95,8 +95,8 @@ export function ProductsScreen({ shopId }: ProductsScreenProps) {
   };
 
   return (
-    <View className="flex-1 bg-[#F4F8F7]">
-      <View className="px-4 pt-2 pb-2 gap-3 bg-[#F4F8F7]">
+    <View className="flex-1 bg-white">
+      <View className="px-4 pt-2 pb-2 gap-3 bg-white">
         <View className="flex-row items-center justify-between">
           <Text className="text-2xl font-heading text-neutral-900">All Products</Text>
           <Button size="sm" onPress={openAdd} className="bg-neutral-900 rounded-md">
@@ -164,7 +164,7 @@ export function ProductsScreen({ shopId }: ProductsScreenProps) {
               <View className="flex-1">
                 <View className="flex-row items-center justify-between">
                   <Text className="text-[11px] font-heading uppercase text-neutral-400">Low Stock</Text>
-                  <Text className="text-[10px] text-neutral-500 underline">View All</Text>
+                  {/*<Text className="text-[10px] text-neutral-500 underline">View All</Text>*/}
                 </View>
                 <Text
                   className={`text-base font-heading ${
