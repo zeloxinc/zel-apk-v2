@@ -1,7 +1,9 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { View, ScrollView, ActivityIndicator, TextInput } from "react-native";
 import { WifiOff, Store, Copy, RefreshCw, Trash2 } from "lucide-react-native";
 import { useColorScheme } from "nativewind";
+
+import { db } from "@/lib/sqlite/db";
 
 import {
   AlertDialog,
@@ -22,27 +24,22 @@ import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { Text } from "@/components/ui/text";
 
+interface Shop {
+  shop_id: string;
+  shop_name: string;
+  shop_business_email: string | null;
+  shop_phone_number: string | null;
+  shop_location_street: string | null;
+  shop_location_city: string | null;
+  shop_location_county: string | null;
+  shop_tax_pin: string | null;
+}
 
-// TODO: Ndege currently using mock data for the shop data 
-const MOCK_SHOP = {
-  shop_id: "shop_001",
-  shop_name: "Zelshop Mega Mart",
-  shop_phone_number: "+254712345678",
-  shop_business_email: "sales@zelshop.com",
-  shop_location_street: "Mombasa Rd",
-  shop_location_city: "Nairobi",
-  shop_location_county: "Nairobi",
-  shop_tax_pin: "A123456789Z",
-};
-
-const MOCK_STAFF = [
-  { profile_user_id: "usr_001", profile_full_name: "Lyda Conley",  role_name: "OWNER"   },
-  { profile_user_id: "usr_002", profile_full_name: "Brian Mwangi", role_name: "CASHIER" },
-  { profile_user_id: "usr_003", profile_full_name: "Amara Osei",   role_name: "CASHIER" },
-];
-
-const MOCK_IS_ONLINE = true;
-
+interface StaffMember {
+  profile_user_id: string;
+  profile_full_name: string;
+  role_name: string;
+}
 
 function getInitials(name: string) {
   return name.split(" ").map((w) => w[0]).slice(0, 2).join("").toUpperCase();
@@ -51,7 +48,6 @@ function getInitials(name: string) {
 function nameHue(name: string) {
   return name.split("").reduce((acc, c) => acc + c.charCodeAt(0), 0) % 360;
 }
-
 
 interface FieldProps {
   label: string;
@@ -68,13 +64,13 @@ function Field({ label, value, onChange, placeholder, disabled, error, keyboardT
   const { colorScheme } = useColorScheme();
   const isDark = colorScheme === "dark";
   
-  const inputTextColor     = isDark ? "#f9fafb" : "#111827";
-  const placeholderColor   = isDark ? "#6b7280" : "#9ca3af";
-  const borderColor        = error
+  const inputTextColor   = isDark ? "#f9fafb" : "#111827";
+  const placeholderColor = isDark ? "#6b7280" : "#9ca3af";
+  const borderColor      = error
     ? "#ef4444"
     : isDark ? "#27272a" : "#e5e7eb";
-  const bgColor            = isDark ? "#18181b" : "#ffffff";
-  const prefixColor        = isDark ? "#a1a1aa" : "#6b7280";
+  const bgColor          = isDark ? "#18181b" : "#ffffff";
+  const prefixColor      = isDark ? "#a1a1aa" : "#6b7280";
 
   return (
     <View className="gap-2">
@@ -133,7 +129,6 @@ function Field({ label, value, onChange, placeholder, disabled, error, keyboardT
   );
 }
 
-
 function SectionHeading({ title, subtitle }: { title: string; subtitle?: string }) {
   return (
     <View className="mb-4">
@@ -145,34 +140,126 @@ function SectionHeading({ title, subtitle }: { title: string; subtitle?: string 
   );
 }
 
+interface ShopSettingsProps {
+  shopId?: string;
+  isOnline?: boolean;
+}
 
-export function ShopSettings() {
-  const isOnline = MOCK_IS_ONLINE;
+export function ShopSettings({ shopId, isOnline = true }: ShopSettingsProps) {
   const { colorScheme } = useColorScheme();
   const isDark = colorScheme === "dark";
 
-  const [shopName, setShopName]   = useState(MOCK_SHOP.shop_name);
-  const [phone, setPhone]         = useState(MOCK_SHOP.shop_phone_number.replace("+254", ""));
-  const [email, setEmail]         = useState(MOCK_SHOP.shop_business_email);
-  const [street, setStreet]       = useState(MOCK_SHOP.shop_location_street);
-  const [city, setCity]           = useState(MOCK_SHOP.shop_location_city);
-  const [county, setCounty]       = useState(MOCK_SHOP.shop_location_county);
-  const [taxPin, setTaxPin]       = useState(MOCK_SHOP.shop_tax_pin);
+  const [activeShopId, setActiveShopId] = useState<string | null>(null);
+  const [loading, setLoading]     = useState(true);
   const [saving, setSaving]       = useState(false);
-  const [inviteCode, setInviteCode]   = useState<string | null>(null);
+
+  const [shopName, setShopName]   = useState("");
+  const [phone, setPhone]         = useState("");
+  const [email, setEmail]         = useState("");
+  const [street, setStreet]       = useState("");
+  const [city, setCity]           = useState("");
+  const [county, setCounty]       = useState("");
+  const [taxPin, setTaxPin]       = useState("");
+
+  const [inviteCode, setInviteCode]     = useState<string | null>(null);
   const [inviteExpiry, setInviteExpiry] = useState<string | null>(null);
-  const [staffList, setStaffList] = useState(MOCK_STAFF);
+  const [staffList, setStaffList]       = useState<StaffMember[]>([]);
+
+  // 1. Fetch Shop & Staff Data from SQLite
+  useEffect(() => {
+    let cancelled = false;
+
+    async function loadData() {
+      setLoading(true);
+      try {
+        // Fetch target shop
+        const shopQuery = shopId
+          ? `SELECT * FROM shops WHERE shop_id = ? LIMIT 1`
+          : `SELECT * FROM shops LIMIT 1`;
+        const shopParams = shopId ? [shopId] : [];
+        const shops = await db.selectAll<Shop>(shopQuery, shopParams);
+
+        if (shops.length > 0) {
+          const s = shops[0];
+          if (!cancelled) {
+            setActiveShopId(s.shop_id);
+            setShopName(s.shop_name || "");
+            setEmail(s.shop_business_email || "");
+            setPhone((s.shop_phone_number || "").replace(/^\+254/, ""));
+            setStreet(s.shop_location_street || "");
+            setCity(s.shop_location_city || "");
+            setCounty(s.shop_location_county || "");
+            setTaxPin(s.shop_tax_pin || "");
+          }
+
+          // Fetch team members for this shop
+          const staffQuery = `
+            SELECT 
+              sp.profile_user_id,
+              sp.profile_full_name,
+              sr.role_name
+            FROM staff s
+            JOIN staff_profiles sp ON s.staff_user_id = sp.profile_user_id
+            JOIN staff_roles sr ON s.staff_role_id = sr.role_id
+            WHERE s.staff_shop_id = ? AND (s.staff_is_active = 1 OR s.staff_is_active = TRUE)
+          `;
+          const staffRows = await db.selectAll<StaffMember>(staffQuery, [s.shop_id]);
+
+          if (!cancelled) {
+            setStaffList(staffRows);
+          }
+        }
+      } catch (error) {
+        console.error("Failed to load shop settings from SQLite:", error);
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    }
+
+    loadData();
+    return () => {
+      cancelled = true;
+    };
+  }, [shopId]);
 
   const isPhoneValid  = !phone  || /^[17]\d{8}$/.test(phone.trim());
   const isEmailValid  = !email  || /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/.test(email.trim());
   const isTaxPinValid = !taxPin || /^[AP]\d{9}[A-Z]$/i.test(taxPin.trim());
-  const canSave = isOnline && !saving && isPhoneValid && isEmailValid && isTaxPinValid;
+  const canSave       = isOnline && !saving && isPhoneValid && isEmailValid && isTaxPinValid && !!activeShopId;
 
+  // 2. Persist Shop Settings to SQLite
   const handleSave = async () => {
-    if (!canSave) return;
+    if (!canSave || !activeShopId) return;
     setSaving(true);
-    await new Promise((r) => setTimeout(r, 900));
-    setSaving(false);
+    try {
+      const fullPhone = phone.trim() ? `+254${phone.trim()}` : null;
+      await db.execute(
+        `UPDATE shops 
+         SET 
+           shop_name = ?,
+           shop_business_email = ?,
+           shop_phone_number = ?,
+           shop_location_street = ?,
+           shop_location_city = ?,
+           shop_location_county = ?,
+           shop_tax_pin = ?
+         WHERE shop_id = ?`,
+        [
+          shopName,
+          email || null,
+          fullPhone,
+          street || null,
+          city || null,
+          county || null,
+          taxPin || null,
+          activeShopId,
+        ]
+      );
+    } catch (error) {
+      console.error("Failed to update shop details in SQLite:", error);
+    } finally {
+      setSaving(false);
+    }
   };
 
   const handleGenerateInvite = () => {
@@ -184,12 +271,31 @@ export function ShopSettings() {
     setInviteExpiry(expiry.toISOString());
   };
 
-  const removeStaff = (id: string) =>
-    setStaffList((prev) => prev.filter((s) => s.profile_user_id !== id));
+  // 3. Deactivate Staff Member in SQLite
+  const removeStaff = async (userId: string) => {
+    if (!activeShopId) return;
+    try {
+      await db.execute(
+        `UPDATE staff SET staff_is_active = 0 WHERE staff_user_id = ? AND staff_shop_id = ?`,
+        [userId, activeShopId]
+      );
+      setStaffList((prev) => prev.filter((s) => s.profile_user_id !== userId));
+    } catch (error) {
+      console.error("Failed to remove staff member:", error);
+    }
+  };
 
-  const cardBg      = isDark ? "#18181b" : "#ffffff";
-  const cardBorder  = isDark ? "#27272a" : "#e5e7eb";
-  const mutedBg     = isDark ? "#27272a" : "#f4f4f5";
+  const cardBg     = isDark ? "#18181b" : "#ffffff";
+  const cardBorder = isDark ? "#27272a" : "#e5e7eb";
+  const mutedBg    = isDark ? "#27272a" : "#f4f4f5";
+
+  if (loading) {
+    return (
+      <View className="flex-1 items-center justify-center py-12">
+        <ActivityIndicator size="large" color={isDark ? "#ffffff" : "#111827"} />
+      </View>
+    );
+  }
 
   return (
     <ScrollView
@@ -198,7 +304,6 @@ export function ShopSettings() {
       showsVerticalScrollIndicator={false}
       keyboardShouldPersistTaps="handled"
     >
-
       {!isOnline && (
         <View className="flex-row items-center gap-2.5 p-3.5 rounded-2xl bg-amber-50 dark:bg-amber-950 border border-amber-200 dark:border-amber-800 mb-5">
           <WifiOff size={16} color="#92400e" />
@@ -212,10 +317,11 @@ export function ShopSettings() {
         style={{ backgroundColor: cardBg, borderColor: cardBorder, borderWidth: 1 }}
         className="flex-row items-center gap-3 p-4 rounded-2xl mb-6"
       >
-        
         <View className="flex-1 min-w-0">
-          <Text className="text-base font-heading text-foreground" numberOfLines={1}>{shopName}</Text>
-          <Text className="text-xs text-muted-foreground">{MOCK_SHOP.shop_id}</Text>
+          <Text className="text-base font-heading text-foreground" numberOfLines={1}>
+            {shopName || "Unnamed Shop"}
+          </Text>
+          <Text className="text-xs text-muted-foreground">{activeShopId}</Text>
         </View>
       </View>
 
@@ -235,7 +341,6 @@ export function ShopSettings() {
         <Field label="County" value={county} onChange={setCounty} placeholder="Nairobi" disabled={!isOnline} />
       </View>
 
-      {/* ── Tax & Currency Section ── */}
       <SectionHeading title="Tax & Currency" />
 
       <View className="gap-4 mb-6">
@@ -274,23 +379,16 @@ export function ShopSettings() {
           </Text>
 
           <View className="flex-row items-end justify-between">
-            <View className="flex-row gap-2 items-end ">
-              <Text
-                className="text-foreground font-secondary text-3xl tracking-[5px]"
-              >
-                {inviteCode} 
-               
+            <View className="flex-row gap-2 items-end">
+              <Text className="text-foreground font-secondary text-3xl tracking-[5px]">
+                {inviteCode}
               </Text>
-              {/*TODO: Hook up the copy functionality*/}
-                <Copy size={13} color={isDark ? "#a1a1aa" : "#6b7280"} />
+              <Copy size={13} color={isDark ? "#a1a1aa" : "#6b7280"} />
             </View>
-            <View className="items-end gap-1  bg-red-300  p-2 rounded">
+            <View className="items-end gap-1 bg-red-300 p-2 rounded">
               <Text className="text-[10px] font-heading uppercase tracking-widest text-red-600">
                 Expires
               </Text>
-              {/*TODO: Include date in invite expiry*/}
-              {/*TODO: Make the expiry a coutdown*/}
-              {/*TODO: Persistantly store the invite code*/}
               <Text className="text-xs font-secondary text-red-600">
                 {inviteExpiry
                   ? new Date(inviteExpiry).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })
@@ -301,7 +399,10 @@ export function ShopSettings() {
         </View>
       )}
 
-      <SectionHeading title="Team Members" subtitle={`${staffList.length} operator${staffList.length !== 1 ? "s" : ""} on this terminal.`} />
+      <SectionHeading
+        title="Team Members"
+        subtitle={`${staffList.length} operator${staffList.length !== 1 ? "s" : ""} on this terminal.`}
+      />
 
       <View
         style={{ backgroundColor: cardBg, borderColor: cardBorder, borderWidth: 1 }}
@@ -353,7 +454,8 @@ export function ShopSettings() {
                       <AlertDialogHeader>
                         <AlertDialogTitle>Remove staff member?</AlertDialogTitle>
                         <AlertDialogDescription>
-                          This will immediately end access for <Text className="font-secondary underline">
+                          This will immediately end access for{" "}
+                          <Text className="font-secondary underline">
                             {member.profile_full_name}
                           </Text>
                         </AlertDialogDescription>
@@ -377,7 +479,6 @@ export function ShopSettings() {
           );
         })}
       </View>
-
     </ScrollView>
   );
 }

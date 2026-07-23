@@ -20,13 +20,20 @@ export function useSalesDashboard(shopId: string | undefined) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (!shopId) return;
+    // Reset state and stop if no shopId is provided
+    if (!shopId) {
+      setSummary(null);
+      setPaymentBreakdown([]);
+      setLoading(false);
+      return;
+    }
+
     let cancelled = false;
 
     async function load() {
       setLoading(true);
       try {
-        // Aggregate total revenue & transaction counts
+        // 1. Aggregate total revenue & transaction counts
         const salesAgg = await db.selectFirst<{
           totalRevenue: number;
           totalTransactions: number;
@@ -39,7 +46,7 @@ export function useSalesDashboard(shopId: string | undefined) {
           [shopId]
         );
 
-        // Aggregate units sold from line items
+        // 2. Aggregate total units sold from line items
         const unitsAgg = await db.selectFirst<{ totalUnitsSold: number }>(
           `SELECT COALESCE(SUM(si.sale_item_quantity), 0) as totalUnitsSold
            FROM sale_items si
@@ -48,15 +55,20 @@ export function useSalesDashboard(shopId: string | undefined) {
           [shopId]
         );
 
-        // Payment method breakdown
+        // 3. Payment method breakdown with ID -> Label mapping
         const breakdown = await db.selectAll<PaymentBreakdown>(
           `SELECT 
-             COALESCE(receipt_payment_method, 'Cash') as method,
-             SUM(receipt_total_amount) as amount,
+             CASE receipt_payment_method_id
+               WHEN 1 THEN 'Cash'
+               WHEN 2 THEN 'M-Pesa'
+               WHEN 3 THEN 'Card'
+               ELSE 'Other'
+             END as method,
+             COALESCE(SUM(receipt_total_amount), 0) as amount,
              COUNT(*) as count
            FROM sale_receipts
            WHERE receipt_shop_id = ?
-           GROUP BY receipt_payment_method`,
+           GROUP BY receipt_payment_method_id`,
           [shopId]
         );
 
@@ -80,6 +92,7 @@ export function useSalesDashboard(shopId: string | undefined) {
     }
 
     load();
+
     return () => {
       cancelled = true;
     };

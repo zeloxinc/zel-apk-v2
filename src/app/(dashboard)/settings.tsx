@@ -1,11 +1,11 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   View,
   Text,
   ScrollView,
   TouchableOpacity,
   useWindowDimensions,
-  Platform,
+  ActivityIndicator,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import {
@@ -14,7 +14,6 @@ import {
   Bell,
   SunMoon,
   ShieldCheck,
-  ChevronRight,
   SlidersHorizontal,
 } from "lucide-react-native";
 import { ShopSettings } from "@/components/settings/shop-settings";
@@ -26,26 +25,29 @@ import { MobileSettingsAccordion } from "@/components/settings/mobile-settings-a
 import { useSharedValue } from "react-native-reanimated";
 import { MobilePageHeader } from "@/components/header";
 
+// Import your custom db helper and types
+import { db, LocalShop, LocalProfile } from "@/lib/sqlite/db";
 
-// Mock
-const MOCK_PROFILE = {
-  profile_full_name: "Lyda Conley",
-  role_name: "OWNER",
-};
-
-const MOCK_SHOP = { shop_name: "Zelshop Mega Mart" };
-
-const IS_OWNER = true;
-
+// Helper component for initials avatar
 function AvatarCircle({ name, size = 64 }: { name: string; size?: number }) {
-  const initials = name.split(" ").map((w) => w[0]).slice(0, 2).join("").toUpperCase();
-  const hue = name.split("").reduce((acc, c) => acc + c.charCodeAt(0), 0) % 360;
+  const safeName = name || "User";
+  const initials = safeName
+    .split(" ")
+    .map((w) => w[0])
+    .slice(0, 2)
+    .join("")
+    .toUpperCase();
+  const hue = safeName.split("").reduce((acc, c) => acc + c.charCodeAt(0), 0) % 360;
+
   return (
     <View
       style={{
-        width: size, height: size, borderRadius: size / 2,
+        width: size,
+        height: size,
+        borderRadius: size / 2,
         backgroundColor: `hsl(${hue}, 40%, 80%)`,
-        alignItems: "center", justifyContent: "center",
+        alignItems: "center",
+        justifyContent: "center",
       }}
     >
       <Text style={{ fontSize: size * 0.33, fontWeight: "700", color: `hsl(${hue}, 40%, 25%)` }}>
@@ -56,11 +58,11 @@ function AvatarCircle({ name, size = 64 }: { name: string; size?: number }) {
 }
 
 const ALL_SECTIONS = [
-  { id: "shop",          label: "Shop Settings",   icon: Store,          component: ShopSettings,          ownerOnly: true  },
-  { id: "user",          label: "User Profile",    icon: User,           component: UserSettings,          ownerOnly: false },
-  { id: "notifications", label: "Notifications",   icon: Bell,           component: NotificationSettings,  ownerOnly: false },
-  { id: "theme",         label: "Theme",           icon: SunMoon,        component: ThemeSettings,         ownerOnly: false },
-  { id: "security",      label: "Security PIN",    icon: ShieldCheck,    component: SecuritySettings,      ownerOnly: false },
+  { id: "shop",          label: "Shop Settings",   icon: Store,        component: ShopSettings,         ownerOnly: true  },
+  { id: "user",          label: "User Profile",    icon: User,         component: UserSettings,         ownerOnly: false },
+  { id: "notifications", label: "Notifications",   icon: Bell,         component: NotificationSettings, ownerOnly: false },
+  { id: "theme",         label: "Theme",           icon: SunMoon,      component: ThemeSettings,        ownerOnly: false },
+  { id: "security",      label: "Security PIN",    icon: ShieldCheck,  component: SecuritySettings,     ownerOnly: false },
 ] as const;
 
 type SectionId = (typeof ALL_SECTIONS)[number]["id"];
@@ -82,7 +84,7 @@ function TabletLayout({
         <View className="px-5 pt-6 pb-4 border-b border-border">
           <Text className="text-xl font-bold text-foreground font-heading">Settings</Text>
           <Text className="text-xs text-muted-foreground font-primary mt-0.5">
-            Manage  configuration
+            Manage configuration
           </Text>
         </View>
         <ScrollView className="flex-1 p-3">
@@ -136,11 +138,53 @@ function TabletLayout({
 export default function SettingsScreen() {
   const { width } = useWindowDimensions();
   const isTablet = width >= 768;
+
   const [activeTab, setActiveTab] = useState<SectionId>("user");
+  const [profile, setProfile] = useState<LocalProfile | null>(null);
+  const [shop, setShop] = useState<LocalShop | null>(null);
+  const [loading, setLoading] = useState(true);
 
-  const allowedSections = ALL_SECTIONS.filter((s) => !s.ownerOnly || IS_OWNER);
+  const scrollY = useSharedValue(0);
 
-   const scrollY = useSharedValue(0);
+  useEffect(() => {
+    async function loadSettingsData() {
+      try {
+        setLoading(true);
+
+        // Query using your custom `db` helper matching your `shops` & `profiles` schema
+        const shopResult = await db.selectFirst<LocalShop>(
+          `SELECT shop_id, shop_name FROM shops LIMIT 1;`
+        );
+
+        const profileResult = await db.selectFirst<LocalProfile>(
+          `SELECT profile_user_id, staff_id, profile_full_name, role_name, shop_id FROM profiles LIMIT 1;`
+        );
+
+        if (shopResult) setShop(shopResult);
+        if (profileResult) setProfile(profileResult);
+      } catch (error) {
+        console.error("Error loading settings data from SQLite:", error);
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    loadSettingsData();
+  }, []);
+
+  // Determine owner status directly from `profiles.role_name`
+  const isOwner = profile?.role_name?.toUpperCase() === "OWNER";
+
+  // Filter allowed sections based on database role
+  const allowedSections = ALL_SECTIONS.filter((s) => !s.ownerOnly || isOwner);
+
+  if (loading) {
+    return (
+      <View className="flex-1 bg-background items-center justify-center">
+        <ActivityIndicator size="large" className="text-primary" />
+      </View>
+    );
+  }
 
   return (
     <View className="flex-1 bg-background">
@@ -153,22 +197,24 @@ export default function SettingsScreen() {
       ) : (
         <ScrollView
           className="flex-1"
-          contentContainerStyle={{  paddingBottom: 120 }}
+          contentContainerStyle={{ paddingBottom: 120 }}
           showsVerticalScrollIndicator={false}
         >
+          <MobilePageHeader title="Settings" scrollY={scrollY} />
 
-            <MobilePageHeader title="Settings" scrollY={scrollY} />
           <View className="px-5">
+            {/* Dynamic User Profile Header */}
             <View className="mb-7">
-              <AvatarCircle name={MOCK_PROFILE.profile_full_name} size={60} />
+              <AvatarCircle name={profile?.profile_full_name || "User"} size={60} />
               <Text className="text-xl text-foreground font-heading mt-3">
-                {MOCK_SHOP.shop_name} 
+                {shop?.shop_name || "My Shop"}
               </Text>
               <Text className="text-xs font-medium text-muted-foreground font-primary mt-0.5">
-                {MOCK_PROFILE.profile_full_name} · {MOCK_PROFILE.role_name}
+                {profile?.profile_full_name || "Staff Member"} · {profile?.role_name || "CASHIER"}
               </Text>
             </View>
-  
+
+            {/* Dynamic Accordion list */}
             <MobileSettingsAccordion sections={allowedSections as any} />
           </View>
         </ScrollView>
