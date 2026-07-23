@@ -45,8 +45,8 @@ export function DashboardPosCard() {
             stiffness: 300,
           });
         }}
-        // onPress={() => router.push("/sales/pos")}
-        onPress={() => router.push("/create-shop")}
+        onPress={() => router.push("/sales/pos")}
+        // onPress={() => router.push("/create-shop")}
         // todo: change back
       >
         <View
