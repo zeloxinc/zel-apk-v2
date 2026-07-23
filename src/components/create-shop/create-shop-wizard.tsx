@@ -62,6 +62,7 @@ export function CreateShopWizard() {
         throw new Error("User session not found. Please log in again.");
       }
 
+      // Step 0: Create shop on Supabase
       setLoadStep(0);
       const { data: shopData, error: shopError } = await supabase
         .from("shops")
@@ -83,7 +84,7 @@ export function CreateShopWizard() {
 
       const newShopId = shopData.shop_id;
 
-      // Step 1: Link staff member to the new shop in Supabase
+      // Step 1: Assign user as owner/staff in Supabase
       setLoadStep(1);
       const { data: roleData } = await supabase
         .from("staff_roles")
@@ -99,7 +100,6 @@ export function CreateShopWizard() {
         staff_role_id: roleId,
       });
 
-      // Fallback attempt if foreign key uses staff_user_id
       if (staffError) {
         await supabase.from("staff").insert({
           staff_shop_id: newShopId,
@@ -108,19 +108,31 @@ export function CreateShopWizard() {
         });
       }
 
-      // Step 2: Processing step delay
+      // Step 2: Seed Supabase sample data if requested
       setLoadStep(2);
-      await new Promise((r) => setTimeout(r, 400));
+      if (loadSamples) {
+        const { error: rpcError } = await supabase.rpc(
+          "load_sample_products_for_shop",
+          { target_shop_id: newShopId }
+        );
 
-      // Step 3: Seed / Sync local SQLite DB with newly created Supabase data
+        if (rpcError) {
+          console.error("RPC Error seeding sample products:", rpcError);
+          throw new Error(`Failed to seed sample products: ${rpcError.message}`);
+        }
+      }
+
+      await new Promise((r) => setTimeout(r, 300));
+
+      // Step 3: Fetch all newly created data (including samples) into local SQLite
       setLoadStep(3);
       await seedLocalDatabase(userId, newShopId);
 
-      router.push("/");
+      // Navigate to the dashboard replacing the stack so user can't navigate back
+      router.replace("/");
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Something went wrong. pleas try again");
+      setError(err instanceof Error ? err.message : "Something went wrong. Please try again.");
       setIsLoading(false);
-      router.replace("/(auth)/login");
     }
   }
 

@@ -1,5 +1,6 @@
-import { View, ScrollView } from "react-native";
-import { Link } from "expo-router";
+import { useState, useCallback } from "react";
+import { View, ScrollView, RefreshControl, ActivityIndicator } from "react-native";
+import { Link, useFocusEffect } from "expo-router";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -22,18 +23,38 @@ import {
   useSalesDashboardStats,
   useGroupedTransactions,
 } from "@/lib/hooks/use-sales-dashboard";
-// TODO: Ndege importing the data from the hook 
 
 export function SalesDashboardScreen() {
-  const { receipts } = useSalesReceipts();
+  const { receipts, loading, refetch } = useSalesReceipts();
+  console.log(receipts)
   const stats = useSalesDashboardStats(receipts);
   const grouped = useGroupedTransactions(receipts);
+
+  const [refreshing, setRefreshing] = useState(false);
+
+  // Auto-refetch from SQLite whenever user navigates back to this screen (e.g. after POS checkout)
+  useFocusEffect(
+    useCallback(() => {
+      refetch();
+    }, [refetch])
+  );
+
+  // Manual pull-to-refresh
+  const handleRefresh = useCallback(async () => {
+    setRefreshing(true);
+    await refetch();
+    setRefreshing(false);
+  }, [refetch]);
 
   return (
     <ScrollView
       className="flex-1 bg-neutral-50"
       contentContainerClassName="p-4 gap-6"
+      refreshControl={
+        <RefreshControl refreshing={refreshing} onRefresh={handleRefresh} />
+      }
     >
+      {/* Header */}
       <View className="flex-row items-center justify-between">
         <View>
           <Text className="text-xl font-heading text-neutral-900">
@@ -45,12 +66,14 @@ export function SalesDashboardScreen() {
         </View>
       </View>
 
+      {/* POS Action */}
       <Link href="/sales/pos" asChild>
         <Button className="bg-neutral-900 rounded-xl">
           <Text className="text-white font-secondary">Open POS</Text>
         </Button>
       </Link>
 
+      {/* Summary Cards */}
       <View className="flex-row flex-wrap gap-3">
         <Card className="w-[48%] border border-neutral-200 bg-white rounded-lg">
           <CardContent className="p-3 flex-row items-center justify-between">
@@ -87,8 +110,16 @@ export function SalesDashboardScreen() {
         </Card>
       </View>
 
+      {/* Transactions List */}
       <View className="gap-6">
-        {Object.keys(grouped).length === 0 ? (
+        {loading && !refreshing ? (
+          <Card className="border border-neutral-200 bg-white rounded-xl p-8 items-center justify-center">
+            <ActivityIndicator size="small" color="#171717" />
+            <Text className="text-neutral-400 text-xs mt-3">
+              Loading offline sales...
+            </Text>
+          </Card>
+        ) : Object.keys(grouped).length === 0 ? (
           <Card className="border border-neutral-200 bg-white rounded-xl p-12 items-center">
             <Text className="text-neutral-400 text-xs text-center">
               No logged sales discovered. Open the POS to start selling
@@ -111,19 +142,22 @@ export function SalesDashboardScreen() {
                     value={dayName}
                     className="border border-neutral-200 bg-white rounded-xl overflow-hidden"
                   >
-                    <AccordionTrigger className="px-4 py-2.5 border-b border-neutral-100 flex-row items-center justify-between">
-                      <Text className="text-xs font-secondary text-neutral-700">
-                        {dayName}
-                      </Text>
-                      <Badge
-                        variant="secondary"
-                        className="bg-neutral-200/50 rounded"
-                      >
-                        <Text className="text-neutral-600 text-[10px] font-secondary">
-                          {dayReceipts.length}{" "}
-                          {dayReceipts.length === 1 ? "sale" : "sales"}
+                    <AccordionTrigger className="px-4 py-3 border-b border-neutral-100">
+                      {/* Flex wrapper keeps date & badge aligned while leaving room for the collapse chevron */}
+                      <View className="flex-row items-center justify-between flex-1 pr-2">
+                        <Text className="text-xs font-secondary text-neutral-700">
+                          {dayName}
                         </Text>
-                      </Badge>
+                        <Badge
+                          variant="secondary"
+                          className="bg-neutral-200/50 rounded"
+                        >
+                          <Text className="text-neutral-600 text-[10px] font-secondary">
+                            {dayReceipts.length}{" "}
+                            {dayReceipts.length === 1 ? "sale" : "sales"}
+                          </Text>
+                        </Badge>
+                      </View>
                     </AccordionTrigger>
 
                     <AccordionContent>
@@ -134,13 +168,16 @@ export function SalesDashboardScreen() {
                             receipt.receipt_payment_method_id === 2;
 
                           return (
-                            <View key={receipt.receipt_id} className="p-4 gap-3">
+                            <View
+                              key={receipt.receipt_id}
+                              className="p-4 gap-3"
+                            >
                               <View className="flex-row justify-between items-start gap-2">
                                 <View className="flex-row items-center gap-1.5">
                                   <Clock size={12} color="#a3a3a3" />
                                   <Text className="text-xs font-secondary text-neutral-800">
                                     {new Date(
-                                      receipt.receipt_created_at,
+                                      receipt.receipt_created_at
                                     ).toLocaleTimeString([], {
                                       hour: "2-digit",
                                       minute: "2-digit",
@@ -170,7 +207,7 @@ export function SalesDashboardScreen() {
                               <View className="gap-1 pl-1">
                                 {receipt.items.map((item, idx) => (
                                   <View
-                                    key={idx}
+                                    key={`${receipt.receipt_id}-item-${idx}`}
                                     className="flex-row items-center justify-between"
                                   >
                                     <Text className="text-[11px] text-neutral-600 font-secondary">
@@ -186,8 +223,8 @@ export function SalesDashboardScreen() {
                                 ))}
                               </View>
 
-                              <View className="flex-row items-center justify-between pt-0.5 border-t border-neutral-50">
-                                <View className="gap-1 pt-2">
+                              <View className="flex-row items-center justify-between pt-2 border-t border-neutral-100">
+                                <View className="gap-1">
                                   <View className="flex-row items-center gap-1.5">
                                     <User size={11} color="#a3a3a3" />
                                     <Text className="text-[11px] text-neutral-500 font-secondary">
@@ -206,7 +243,7 @@ export function SalesDashboardScreen() {
                                   </View>
                                 </View>
 
-                                <Text className="text-sm font-heading text-neutral-900 pt-2">
+                                <Text className="text-sm font-heading text-neutral-900">
                                   KES{" "}
                                   {receipt.receipt_total_amount.toLocaleString()}
                                 </Text>
@@ -226,6 +263,3 @@ export function SalesDashboardScreen() {
     </ScrollView>
   );
 }
-
-
-// TODO: the accordion items properly aligned 

@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { db } from "@/lib/sqlite/db";
+import { db, LocalProfile } from "@/lib/sqlite/db";
 
 export type StaffRole = "owner" | "cashier" | "manager";
 
@@ -24,32 +24,24 @@ export function useCurrentStaff() {
 
     async function load() {
       try {
-        const row = await db.selectFirst<{
-          staff_id: string;
-          staff_role_id: number;
-          staff_shop_id: string;
-          profile_full_name: string | null;
-        }>(
-          `SELECT 
-             s.staff_id, 
-             s.staff_role_id, 
-             s.staff_shop_id, 
-             p.profile_full_name 
-           FROM staff s
-           LEFT JOIN staff_profiles p ON s.staff_user_id = p.profile_user_id
-           LIMIT 1`
+        // Query the local `profiles` table created in initOfflineDatabase
+        const row = await db.selectFirst<LocalProfile>(
+          `SELECT staff_id, profile_full_name, role_name, shop_id FROM profiles LIMIT 1`
         );
 
         if (!cancelled && row) {
+          // Normalize role name (e.g. "Owner" -> "owner", "Admin"/"Manager" -> "manager")
+          const rawRole = (row.role_name || "").toLowerCase();
           let role: StaffRole = "cashier";
-          if (row.staff_role_id === 1) role = "owner";
-          else if (row.staff_role_id === 2) role = "manager";
+          
+          if (rawRole.includes("owner")) role = "owner";
+          else if (rawRole.includes("admin") || rawRole.includes("manager")) role = "manager";
 
           setStaff({
             id: row.staff_id,
             name: row.profile_full_name ?? "Shop User",
             role,
-            shopId: row.staff_shop_id,
+            shopId: row.shop_id,
           });
         }
       } catch (error) {
