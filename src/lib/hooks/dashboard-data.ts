@@ -70,6 +70,23 @@ export function formatKES(n: number): string {
   }).format(n);
 }
 
+export function relativeTime(date: Date | string | number): string {
+  const now = new Date();
+  const past = new Date(date);
+  const diffMs = now.getTime() - past.getTime();
+  const diffMins = Math.floor(diffMs / 60_000);
+  const diffHours = Math.floor(diffMins / 60);
+  const diffDays = Math.floor(diffHours / 24);
+
+  if (diffMins < 1) return "Just now";
+  if (diffMins < 60) return `${diffMins}m ago`;
+  if (diffHours < 24) return `${diffHours}h ago`;
+  if (diffDays === 1) return "Yesterday";
+  if (diffDays < 7) return `${diffDays}d ago`;
+
+  return past.toLocaleDateString("en-KE", { month: "short", day: "numeric" });
+}
+
 // ----------------------------------------------------------------------
 // Hooks querying local SQLite
 // ----------------------------------------------------------------------

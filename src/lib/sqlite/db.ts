@@ -166,29 +166,35 @@ export const getDatabase = (): Promise<SQLite.SQLiteDatabase> => {
   return dbPromise;
 };
 
+// ... inside db.ts
+
 export const db = {
-  /**
-   * Run a SELECT query expecting multiple rows
-   */
   async selectAll<T>(query: string, params: unknown[] = []): Promise<T[]> {
     const instance = await getDatabase();
     return await instance.getAllAsync<T>(query, params as SQLite.SQLiteBindParams);
   },
 
-  /**
-   * Run a SELECT query expecting a single row (or null)
-   */
   async selectFirst<T>(query: string, params: unknown[] = []): Promise<T | null> {
     const instance = await getDatabase();
     const result = await instance.getFirstAsync<T>(query, params as SQLite.SQLiteBindParams);
     return result ?? null;
   },
 
-  /**
-   * Execute an INSERT, UPDATE, or DELETE query
-   */
   async run(query: string, params: unknown[] = []) {
     const instance = await getDatabase();
     return await instance.runAsync(query, params as SQLite.SQLiteBindParams);
+  },
+
+  /**
+   * Executes a set of operations inside an atomic transaction.
+   * If any query fails, all changes are rolled back automatically.
+   */
+  async transaction<T>(action: (instance: SQLite.SQLiteDatabase) => Promise<T>): Promise<T> {
+    const instance = await getDatabase();
+    let result: T;
+    await instance.withTransactionAsync(async () => {
+      result = await action(instance);
+    });
+    return result!;
   },
 };

@@ -46,7 +46,12 @@ function computeSku(productName: string, variantName: string, index: number): st
 interface ProductFormProps {
   shopId: string;
   product?: ProductWithVariants;
-  onSuccess: (result: { product_id: string; product_name: string; variants: InventoryVariant[] }) => void;
+  onSuccess: (result: {
+    product_id: string;
+    product_name: string;
+    variants: InventoryVariant[];
+    deletedVariantIds: string[];
+  }) => void;
   onCancel: () => void;
 }
 
@@ -66,12 +71,18 @@ export function ProductForm({ shopId, product, onSuccess, onCancel }: ProductFor
     })) ?? [emptyVariant()],
   );
 
+  // Track variant IDs deleted during this session so SQLite can purge them
+  const [deletedVariantIds, setDeletedVariantIds] = useState<string[]>([]);
   const [openValue, setOpenValue] = useState("variant-0");
   const [errors, setErrors] = useState<Record<string, string>>({});
 
+  // Auto-generate SKU only for NEW variants that don't have custom/existing ones
   useEffect(() => {
     setVariants((prev) =>
-      prev.map((v, i) => ({ ...v, variant_sku: computeSku(productName, v.variant_name, i) })),
+      prev.map((v, i) => {
+        if (v.variant_id) return v; // Don't override existing saved variant SKUs
+        return { ...v, variant_sku: computeSku(productName, v.variant_name, i) };
+      }),
     );
   }, [productName]);
 
@@ -87,14 +98,12 @@ export function ProductForm({ shopId, product, onSuccess, onCancel }: ProductFor
     return Object.keys(e).length === 0;
   };
 
-  // TODO: Ndege update product variant - local ui
-
   const updateVariant = (index: number, field: keyof VariantDraft, value: string) => {
     setVariants((prev) =>
       prev.map((v, i) => {
         if (i !== index) return v;
         const updated = { ...v, [field]: value };
-        if (field === "variant_name") {
+        if (field === "variant_name" && !v.variant_id) {
           updated.variant_sku = computeSku(productName, value, index);
         }
         return updated;
@@ -102,14 +111,15 @@ export function ProductForm({ shopId, product, onSuccess, onCancel }: ProductFor
     );
   };
 
-  // TODO: Ndege remove a variant - local ui
-
   const removeVariant = (index: number) => {
+    const target = variants[index];
+    if (target?.variant_id) {
+      setDeletedVariantIds((prev) => [...prev, target.variant_id!]);
+    }
     setVariants((prev) => prev.filter((_, i) => i !== index));
     setOpenValue("variant-0");
   };
 
-  // TODO: Ndege add new variant - local ui
   const addNewVariant = () => {
     const nextIndex = variants.length;
     const fresh = emptyVariant();
@@ -118,7 +128,6 @@ export function ProductForm({ shopId, product, onSuccess, onCancel }: ProductFor
     setOpenValue(`variant-${nextIndex}`);
   };
 
-  // TODO: Ndege now this is where the save is done 
   const handleSave = () => {
     if (!validate()) return;
 
@@ -127,6 +136,7 @@ export function ProductForm({ shopId, product, onSuccess, onCancel }: ProductFor
     const savedVariants: InventoryVariant[] = variants.map((v) => ({
       variant_id: v.variant_id ?? randomUUID(),
       variant_product_type_id: productId,
+      variant_shop_id: shopId,
       variant_name: v.variant_name.trim(),
       variant_sku: v.variant_sku,
       variant_buying_price: parseFloat(v.variant_buying_price) || 0,
@@ -135,7 +145,12 @@ export function ProductForm({ shopId, product, onSuccess, onCancel }: ProductFor
       variant_current_stock: parseInt(v.variant_current_stock, 10) || 0,
     }));
 
-    onSuccess({ product_id: productId, product_name: productName.trim(), variants: savedVariants });
+    onSuccess({
+      product_id: productId,
+      product_name: productName.trim(),
+      variants: savedVariants,
+      deletedVariantIds,
+    });
   };
 
   return (
@@ -171,7 +186,7 @@ export function ProductForm({ shopId, product, onSuccess, onCancel }: ProductFor
 
               return (
                 <AccordionItem
-                  key={i}
+                  key={v.variant_id ?? i}
                   value={`variant-${i}`}
                   className={`border rounded-xl overflow-hidden bg-white ${
                     hasError ? "border-red-300" : "border-neutral-200"
@@ -214,13 +229,6 @@ export function ProductForm({ shopId, product, onSuccess, onCancel }: ProductFor
                       />
                     </View>
 
-                    {/*<View className="gap-1">
-                      <Text className="text-xs font-heading text-neutral-500 uppercase">SKU</Text>
-                      <View className="h-11 px-3 justify-center rounded-lg bg-neutral-100 border border-neutral-200">
-                        <Text className="text-xs font-mono text-neutral-500">{v.variant_sku}</Text>
-                      </View>
-                    </View>*/}
-
                     <View className="gap-1">
                       <Text className="text-xs font-heading text-neutral-500 uppercase">Unit of Measure</Text>
                       <View className="flex-row flex-wrap gap-2">
@@ -259,14 +267,11 @@ export function ProductForm({ shopId, product, onSuccess, onCancel }: ProductFor
                               KES
                             </Text>
                           </View>
-                        
                           <TextInput
                             placeholder="0.00"
                             keyboardType="numeric"
                             value={v.variant_buying_price}
-                            onChangeText={(val) =>
-                              updateVariant(i, "variant_buying_price", val)
-                            }
+                            onChangeText={(val) => updateVariant(i, "variant_buying_price", val)}
                             className="flex-1 px-3 font-primary text-sm text-neutral-900"
                             placeholderTextColor="#A3A3A3"
                           />
@@ -285,14 +290,11 @@ export function ProductForm({ shopId, product, onSuccess, onCancel }: ProductFor
                               KES
                             </Text>
                           </View>
-                        
                           <TextInput
                             placeholder="0.00"
                             keyboardType="numeric"
                             value={v.variant_selling_price}
-                            onChangeText={(val) =>
-                              updateVariant(i, "variant_selling_price", val)
-                            }
+                            onChangeText={(val) => updateVariant(i, "variant_selling_price", val)}
                             className="flex-1 px-3 font-primary text-sm text-neutral-900"
                             placeholderTextColor="#A3A3A3"
                           />
@@ -325,7 +327,6 @@ export function ProductForm({ shopId, product, onSuccess, onCancel }: ProductFor
         </View>
       </ScrollView>
 
-      {/* Sticky footer — addresses your TODO from the web version */}
       <View className="border-t border-neutral-100 bg-white px-5 py-4 flex-row gap-3">
         <Button variant="outline" onPress={onCancel} className="flex-1 h-12 rounded-xl">
           <Text className="text-[13px] font-heading text-neutral-800">Cancel</Text>
