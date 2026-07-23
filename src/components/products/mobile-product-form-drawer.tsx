@@ -1,14 +1,14 @@
 import { Modal, View, Pressable, useWindowDimensions } from "react-native";
 import { Text } from "@/components/ui/text";
-import { ProductForm } from "./product-form";
-import type { ProductWithVariants, InventoryVariant } from "@/lib/hooks/use-inventory";
+import { ProductForm, type ProductFormSuccessResult } from "./product-form";
+import type { ProductWithVariants } from "@/lib/hooks/use-inventory";
 
 interface MobileProductFormDrawerProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   shopId: string;
   product?: ProductWithVariants;
-  onSuccess: (result: { product_id: string; product_name: string; variants: InventoryVariant[] }) => void;
+  onSuccess: (result: ProductFormSuccessResult) => void;
 }
 
 export function MobileProductFormDrawer({

@@ -22,6 +22,13 @@ export interface VariantDraft {
   variant_current_stock: string;
 }
 
+export interface ProductFormSuccessResult {
+  product_id: string;
+  product_name: string;
+  variants: InventoryVariant[];
+  deletedVariantIds: string[];
+}
+
 const UNITS = ["Pcs", "Kgs", "Ltrs", "Bags", "Boxes", "Crates"];
 
 const emptyVariant = (): VariantDraft => ({
@@ -34,21 +41,19 @@ const emptyVariant = (): VariantDraft => ({
 });
 
 function computeSku(productName: string, variantName: string, index: number): string {
-  const baseProduct = productName.trim().replace(/[^a-zA-Z0-9]/g, "").substring(0, 3).toUpperCase().padEnd(3, "X");
-  const baseVariant = variantName.trim().replace(/[^a-zA-Z0-9]/g, "").substring(0, 3).toUpperCase().padEnd(3, "VAR");
-  
-  return `${baseProduct}-${baseVariant}-${String(index + 1).padStart(2, "0")}`;
+  const baseProduct = productName.trim().replace(/[^a-zA-Z0-9]/g, "").substring(0, 3).toUpperCase();
+  const baseVariant = variantName.trim().replace(/[^a-zA-Z0-9]/g, "").substring(0, 3).toUpperCase();
+
+  const productPart = baseProduct.padEnd(3, "X");
+  const variantPart = baseVariant.length > 0 ? baseVariant.padEnd(3, "X") : `V0${index + 1}`;
+
+  return `${productPart}-${variantPart}`;
 }
 
 interface ProductFormProps {
   shopId: string;
   product?: ProductWithVariants;
-  onSuccess: (result: {
-    product_id: string;
-    product_name: string;
-    variants: InventoryVariant[];
-    deletedVariantIds: string[];
-  }) => void;
+  onSuccess: (result: ProductFormSuccessResult) => void;
   onCancel: () => void;
 }
 
@@ -68,39 +73,25 @@ export function ProductForm({ shopId, product, onSuccess, onCancel }: ProductFor
     })) ?? [emptyVariant()],
   );
 
-  // Track variant IDs deleted during this session so SQLite can purge them
+  // Track variant IDs removed during edit mode
   const [deletedVariantIds, setDeletedVariantIds] = useState<string[]>([]);
   const [openValue, setOpenValue] = useState("variant-0");
   const [errors, setErrors] = useState<Record<string, string>>({});
 
-  // Auto-generate SKU only for NEW variants that don't have custom/existing ones
   useEffect(() => {
     setVariants((prev) =>
-      prev.map((v, i) => {
-        if (v.variant_id) return v; // Don't override existing saved variant SKUs
-        return { ...v, variant_sku: computeSku(productName, v.variant_name, i) };
-      }),
+      prev.map((v, i) => ({ ...v, variant_sku: computeSku(productName, v.variant_name, i) })),
     );
   }, [productName]);
 
   const validate = () => {
     const e: Record<string, string> = {};
     if (!productName.trim()) e.productName = "Product name is required";
-    
     variants.forEach((v, i) => {
       if (!v.variant_name.trim()) e[`v${i}_name`] = "Required";
-      
-      const buyPrice = parseFloat(v.variant_buying_price);
-      if (!v.variant_buying_price || isNaN(buyPrice) || buyPrice < 0) {
-        e[`v${i}_buy`] = "Invalid price";
-      }
-      
-      const sellPrice = parseFloat(v.variant_selling_price);
-      if (!v.variant_selling_price || isNaN(sellPrice) || sellPrice < 0) {
-        e[`v${i}_sell`] = "Invalid price";
-      }
+      if (!v.variant_selling_price) e[`v${i}_sell`] = "Required";
+      if (!v.variant_buying_price) e[`v${i}_buy`] = "Required";
     });
-    
     setErrors(e);
     return Object.keys(e).length === 0;
   };
@@ -110,7 +101,7 @@ export function ProductForm({ shopId, product, onSuccess, onCancel }: ProductFor
       prev.map((v, i) => {
         if (i !== index) return v;
         const updated = { ...v, [field]: value };
-        if (field === "variant_name" && !v.variant_id) {
+        if (field === "variant_name") {
           updated.variant_sku = computeSku(productName, value, index);
         }
         return updated;
@@ -120,7 +111,7 @@ export function ProductForm({ shopId, product, onSuccess, onCancel }: ProductFor
 
   const removeVariant = (index: number) => {
     const target = variants[index];
-    if (target?.variant_id) {
+    if (target.variant_id) {
       setDeletedVariantIds((prev) => [...prev, target.variant_id!]);
     }
     setVariants((prev) => prev.filter((_, i) => i !== index));
@@ -193,7 +184,7 @@ export function ProductForm({ shopId, product, onSuccess, onCancel }: ProductFor
 
               return (
                 <AccordionItem
-                  key={v.variant_id ?? i}
+                  key={i}
                   value={`variant-${i}`}
                   className={`border rounded-xl overflow-hidden bg-white ${
                     hasError ? "border-red-300" : "border-neutral-200"
@@ -274,6 +265,7 @@ export function ProductForm({ shopId, product, onSuccess, onCancel }: ProductFor
                               KES
                             </Text>
                           </View>
+
                           <TextInput
                             placeholder="0.00"
                             keyboardType="numeric"
@@ -297,6 +289,7 @@ export function ProductForm({ shopId, product, onSuccess, onCancel }: ProductFor
                               KES
                             </Text>
                           </View>
+
                           <TextInput
                             placeholder="0.00"
                             keyboardType="numeric"

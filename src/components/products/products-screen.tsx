@@ -5,6 +5,8 @@ import { Text } from "@/components/ui/text";
 import { Plus, Package, Search, AlertCircle, X } from "lucide-react-native";
 import { Link } from "expo-router";
 import { useInventory, type ProductWithVariants } from "@/lib/hooks/use-inventory";
+import { saveProductWithVariants } from "@/lib/hooks/saveProductWithVariants";
+import type { ProductFormSuccessResult } from "./product-form";
 import { ProductCard } from "./product-card";
 import { TopSellingAccordion } from "./top-selling-accordion";
 import { MobileProductDrawer } from "./mobile-product-drawer";
@@ -15,7 +17,6 @@ interface ProductsScreenProps {
   shopId: string;
 }
 
-// Ndege: where the products are displayed - products page
 export function ProductsScreen({ shopId }: ProductsScreenProps) {
   const [search, setSearch] = useState("");
   const { catalog, loading, topSelling, reload } = useInventory();
@@ -70,8 +71,21 @@ export function ProductsScreen({ shopId }: ProductsScreenProps) {
     setDeleteOpen(true);
   };
 
-  const handleFormSuccess = () => {
-    reload();
+  // Pattern A: Parent executes database persistence and triggers reload
+  const handleFormSuccess = async (result: ProductFormSuccessResult) => {
+    try {
+      await saveProductWithVariants({
+        product_id: result.product_id,
+        shop_id: shopId,
+        product_name: result.product_name,
+        variants: result.variants,
+        deletedVariantIds: result.deletedVariantIds,
+      });
+
+      await reload();
+    } catch (error) {
+      console.error("Failed to save product in database:", error);
+    }
   };
 
   const handleDeleteConfirm = () => {
@@ -97,7 +111,7 @@ export function ProductsScreen({ shopId }: ProductsScreenProps) {
           <View className="items-center justify-center border-r border-neutral-200 bg-neutral-50 px-3">
             <Search size={15} color="#737373" />
           </View>
-        
+         
           <TextInput
             placeholder="Search products, variants"
             value={search}
@@ -105,7 +119,7 @@ export function ProductsScreen({ shopId }: ProductsScreenProps) {
             className="flex-1 px-3 font-primary text-[13px] text-neutral-900"
             placeholderTextColor="#A3A3A3"
           />
-        
+         
           {search.length > 0 && (
             <Pressable
               onPress={() => setSearch("")}
