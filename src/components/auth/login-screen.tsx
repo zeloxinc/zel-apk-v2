@@ -16,7 +16,7 @@ import { Images } from "@/assets";
 import { Image } from "expo-image";
 import { supabase } from "@/lib/db/supabase";
 import { seedLocalDatabase } from "@/lib/sqlite/fetchAllData";
-import { db } from "@/lib/sqlite/db";      // 1. Authenticate & Create User in Supabase
+import { db } from "@/lib/sqlite/db";      
 
 
 type Step = "email" | "pin";

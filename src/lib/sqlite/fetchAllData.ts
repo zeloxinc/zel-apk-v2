@@ -11,7 +11,7 @@ export async function seedLocalDatabase(
 ): Promise<string | null> {
   const db = dbInstance ?? (await getDatabase());
 
-  // 1. Clear local tables
+  // 1. Clear local tables before seeding
   await db.execAsync(`
     DELETE FROM shops;
     DELETE FROM profiles;
@@ -28,7 +28,7 @@ export async function seedLocalDatabase(
     .select(`
       profile_user_id,
       profile_full_name,
-      staff!inner (
+      staff (
         staff_id,
         staff_shop_id,
         staff_roles (
@@ -43,12 +43,16 @@ export async function seedLocalDatabase(
   if (!profileError && profileData && profileData.length > 0) {
     const profile = profileData[0];
 
-    const staffList: any[] = Array.isArray(profile.staff)
-      ? profile.staff
-      : [profile.staff];
+    // Safely normalize staff to an array, filtering out null/undefined entries
+    const rawStaff = profile.staff;
+    const staffList: any[] = Array.isArray(rawStaff)
+      ? rawStaff.filter(Boolean)
+      : rawStaff
+      ? [rawStaff]
+      : [];
 
     const activeStaff = initialShopId
-      ? staffList.find((s: any) => s.staff_shop_id === initialShopId) ?? staffList[0]
+      ? staffList.find((s: any) => s?.staff_shop_id === initialShopId) ?? staffList[0]
       : staffList[0];
 
     const rawRoles = activeStaff?.staff_roles;
@@ -58,20 +62,22 @@ export async function seedLocalDatabase(
 
     resolvedShopId = initialShopId ?? activeStaff?.staff_shop_id ?? null;
 
-    await db.runAsync(
-      `INSERT INTO profiles (profile_user_id, staff_id, profile_full_name, role_name, shop_id) 
-       VALUES (?, ?, ?, ?, ?)
-       ON CONFLICT(profile_user_id) DO UPDATE SET
-         staff_id = excluded.staff_id,
-         profile_full_name = excluded.profile_full_name,
-         role_name = excluded.role_name,
-         shop_id = excluded.shop_id;`,
-      profile.profile_user_id,
-      activeStaff?.staff_id ?? "",
-      profile.profile_full_name,
-      resolvedRole,
-      resolvedShopId ?? ""
-    );
+    if (resolvedShopId) {
+      await db.runAsync(
+        `INSERT INTO profiles (profile_user_id, staff_id, profile_full_name, role_name, shop_id) 
+         VALUES (?, ?, ?, ?, ?)
+         ON CONFLICT(profile_user_id) DO UPDATE SET
+           staff_id = excluded.staff_id,
+           profile_full_name = excluded.profile_full_name,
+           role_name = excluded.role_name,
+           shop_id = excluded.shop_id;`,
+        profile.profile_user_id,
+        activeStaff?.staff_id ?? "",
+        profile.profile_full_name,
+        resolvedRole,
+        resolvedShopId
+      );
+    }
   }
 
   // If no shop is attached to this profile, stop here and return null
@@ -149,9 +155,9 @@ export async function seedLocalDatabase(
           item.variant_shop_id,
           item.variant_name,
           item.variant_sku || "",
-          Number(item.variant_buying_price),
-          Number(item.variant_selling_price),
-          Number(item.variant_current_stock),
+          Number(item.variant_buying_price || 0),
+          Number(item.variant_selling_price || 0),
+          Number(item.variant_current_stock || 0),
           item.variant_unit_measure || "Kgs"
         );
       }
@@ -182,8 +188,8 @@ export async function seedLocalDatabase(
           r.receipt_id,
           r.receipt_shop_id,
           r.receipt_staff_id,
-          Number(r.receipt_total_amount),
-          Number(r.receipt_payment_method_id),
+          Number(r.receipt_total_amount || 0),
+          Number(r.receipt_payment_method_id || 1),
           r.receipt_created_at
         );
       }
@@ -229,8 +235,8 @@ export async function seedLocalDatabase(
               i.sale_item_id,
               i.sale_item_receipt_id,
               i.sale_item_variant_id,
-              Number(i.sale_item_quantity),
-              Number(i.sale_item_unit_price)
+              Number(i.sale_item_quantity || 0),
+              Number(i.sale_item_unit_price || 0)
             );
           }
         });
