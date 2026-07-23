@@ -30,15 +30,15 @@ function NoShopState() {
   const router = useRouter();
   return (
     <View className="flex-1 items-center justify-center px-6 gap-4">
-      <Text className="font-sans text-base font-bold text-neutral-800">No shop found</Text>
-      <Text className="font-sans text-sm text-neutral-400 max-w-xs leading-relaxed text-center">
+      <Text className="font-heading text-base  text-neutral-800">No shop found</Text>
+      <Text className="font-primary text-sm text-neutral-400 max-w-xs leading-relaxed text-center">
         Your account isn&apos;t linked to a shop yet. Create or join one to get started.
       </Text>
       <TouchableOpacity
-        onPress={() => router.push("/choose-path" as any)}
+        onPress={() => router.replace("/choose-path" as any)}
         className="h-10 px-5 rounded-xl bg-neutral-900 items-center justify-center"
       >
-        <Text className="font-sans text-sm font-semibold text-white">Set up shop</Text>
+        <Text className="font-secondary text-sm  text-white">Set up shop</Text>
       </TouchableOpacity>
     </View>
   );
