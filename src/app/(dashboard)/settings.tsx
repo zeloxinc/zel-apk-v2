@@ -24,6 +24,10 @@ import { SecuritySettings } from "@/components/settings/security-settings";
 import { MobileSettingsAccordion } from "@/components/settings/mobile-settings-accordion";
 import { useSharedValue } from "react-native-reanimated";
 import { MobilePageHeader } from "@/components/header";
+// Import your database initializer & sync engine
+import { getDatabase } from "@/lib/sqlite/db";
+import { executeTwoWaySync } from "@/lib/sqlite/sync";
+import { Alert } from 'react-native';
 
 // Import your custom db helper and types
 import { db, LocalShop, LocalProfile } from "@/lib/sqlite/db";
@@ -193,21 +197,39 @@ export default function SettingsScreen() {
   const [isSyncDisabled, setIsSyncDisabled] = useState(false);
   
   const handleSync = async () => {
-    try {
-      setSyncing(true);
-      setIsSyncDisabled(true);
-  // Ndege
-      // Handle the sync/API call here
-      await new Promise((resolve) => setTimeout(resolve, 2000));
+      try {
+        setSyncing(true);
+        setIsSyncDisabled(true);
   
-      // Handle success logic here
-    } catch (error) {
-      // Handle error logic here
-    } finally {
-      setSyncing(false);
-      setIsSyncDisabled(false);
-    }
-  };
+        // 1. Fetch SQLite database instance
+        const dbInstance = await getDatabase();
+  
+        // 2. Execute full two-way synchronization
+        const result = await executeTwoWaySync(dbInstance);
+  
+        // 3. Feedback logic based on sync execution
+        if (result.success) {
+          Alert.alert(
+            "Sync Complete",
+            `Data synced successfully.\n\nUploaded: ${result.uploaded} records\nDownloaded: ${result.downloaded} records`
+          );
+        } else {
+          Alert.alert(
+            "Sync Completed with Warnings",
+            `Some items could not sync due to validation limits.\n\nUploaded: ${result.uploaded} records\nDownloaded: ${result.downloaded} records`
+          );
+        }
+      } catch (error) {
+        console.error("Sync execution failed:", error);
+        Alert.alert(
+          "Sync Failed",
+          "Could not complete synchronization. Please check your network connection and try again."
+        );
+      } finally {
+        setSyncing(false);
+        setIsSyncDisabled(false);
+      }
+    };
 
   
   const scrollY = useSharedValue(0);
