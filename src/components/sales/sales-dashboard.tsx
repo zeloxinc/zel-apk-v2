@@ -48,7 +48,7 @@ export function SalesDashboardScreen() {
 
   return (
     <ScrollView
-      className="flex-1 bg-neutral-50"
+      className="flex-1 bg-white"
       contentContainerClassName="p-4 gap-6"
       refreshControl={
         <RefreshControl refreshing={refreshing} onRefresh={handleRefresh} />
