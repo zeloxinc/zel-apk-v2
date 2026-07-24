@@ -224,7 +224,7 @@ export default function SettingsScreen() {
         Alert.alert(
           "Sync Failed",
           "Could not complete synchronization. Please check your network connection and try again."
-        );
+        );sync
       } finally {
         setSyncing(false);
         setIsSyncDisabled(false);
