@@ -56,6 +56,5 @@ export function useCurrentStaff() {
       cancelled = true;
     };
   }, []);
-console.log(staff, loading)
   return { staff, loading };
 }
