@@ -26,7 +26,6 @@ import {
 
 export function SalesDashboardScreen() {
   const { receipts, loading, refetch } = useSalesReceipts();
-  console.log(receipts)
   const stats = useSalesDashboardStats(receipts);
   const grouped = useGroupedTransactions(receipts);
 
