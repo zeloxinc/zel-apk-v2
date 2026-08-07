@@ -4,7 +4,6 @@ import { uplinkInventory } from "./syncmodules/uplinkInventory";
 import { uplinkSales } from "./syncmodules/uplinkSales";
 import { downlinkInventory } from "./syncmodules/downlinkInventory";
 import { downlinkSales } from "./syncmodules/downlinkSales";
-import { LocalProfile } from "./db";
 
 export async function executeTwoWaySync(
   db: SQLite.SQLiteDatabase
@@ -14,16 +13,17 @@ export async function executeTwoWaySync(
   let downloadedCount = 0;
 
   try {
-    const activeProfile = await db.getFirstAsync<LocalProfile>(
-      "SELECT shop_id FROM profiles LIMIT 1"
+    // FIX: Query staff_shop_id from the normalized 'staff' table
+    const activeStaff = await db.getFirstAsync<{ staff_shop_id: string }>(
+      "SELECT staff_shop_id FROM staff WHERE staff_is_active = 1 LIMIT 1"
     );
     
-    if (!activeProfile) {
-      console.warn("⚠️ [Sync Stopped] No active profile discovered locally.");
+    if (!activeStaff || !activeStaff.staff_shop_id) {
+      console.warn("⚠️ [Sync Stopped] No active staff/shop session discovered locally.");
       return { success: false, uploaded: 0, downloaded: 0 };
     }
     
-    const shopId = activeProfile.shop_id;
+    const shopId = activeStaff.staff_shop_id;
 
     const inventoryUploaded = await uplinkInventory(supabase, db);
     uploadedCount += inventoryUploaded;

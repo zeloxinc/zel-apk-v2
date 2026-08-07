@@ -1,6 +1,5 @@
 import * as SQLite from "expo-sqlite";
 import { SupabaseClient } from "@supabase/supabase-js";
-import { LocalProduct, LocalVariant } from "../db"; 
 
 export async function downlinkInventory(
   supabase: SupabaseClient,
@@ -29,57 +28,56 @@ export async function downlinkInventory(
   const cloudVariantIds = new Set(cloudVariants?.map((cv) => cv.variant_id) || []);
 
   await db.withTransactionAsync(async () => {
-    
-    
-    const localProducts = await db.getAllAsync<LocalProduct>(
-      "SELECT product_id, synced FROM products WHERE product_shop_id = ?",
-      shopId
+    // Clean up local product_types
+    const localProducts = await db.getAllAsync<{ product_type_id: string; synced: number }>(
+      "SELECT product_type_id, synced FROM product_types WHERE product_type_shop_id = ?",
+      [shopId]
     );
 
     for (const lp of localProducts) {
-      if (lp.synced === 1 && !cloudProductIds.has(lp.product_id)) {
-        await db.runAsync("DELETE FROM products WHERE product_id = ?", lp.product_id);
+      if (lp.synced === 1 && !cloudProductIds.has(lp.product_type_id)) {
+        await db.runAsync("DELETE FROM product_types WHERE product_type_id = ?", [lp.product_type_id]);
       }
     }
 
-    const localVariants = await db.getAllAsync<LocalVariant>(
-      "SELECT variant_id, synced FROM variants WHERE variant_shop_id = ?",
-      shopId
+    // Clean up local product_variants
+    const localVariants = await db.getAllAsync<{ variant_id: string; synced: number }>(
+      "SELECT variant_id, synced FROM product_variants WHERE variant_shop_id = ?",
+      [shopId]
     );
 
     for (const lv of localVariants) {
       if (lv.synced === 1 && !cloudVariantIds.has(lv.variant_id)) {
-        await db.runAsync("DELETE FROM variants WHERE variant_id = ?", lv.variant_id);
+        await db.runAsync("DELETE FROM product_variants WHERE variant_id = ?", [lv.variant_id]);
       }
     }
 
-
-    
+    // Upsert Product Types
     if (cloudProductTypes && cloudProductTypes.length > 0) {
       for (const cp of cloudProductTypes) {
         await db.runAsync(
-          `INSERT INTO products (product_id, product_shop_id, product_name, synced)
-           VALUES (?, ?, ?, 1)
-           ON CONFLICT(product_id) DO UPDATE SET
-             product_shop_id = excluded.product_shop_id,
-             product_name = excluded.product_name,
+          `INSERT INTO product_types (product_type_id, product_type_shop_id, product_type_name, product_type_is_active, synced)
+           VALUES (?, ?, ?, 1, 1)
+           ON CONFLICT(product_type_id) DO UPDATE SET
+             product_type_shop_id = excluded.product_type_shop_id,
+             product_type_name = excluded.product_type_name,
+             product_type_is_active = 1,
              synced = 1;`,
-          cp.product_type_id,
-          cp.product_type_shop_id,
-          cp.product_type_name
+          [cp.product_type_id, cp.product_type_shop_id, cp.product_type_name]
         );
       }
       downloadedCount += cloudProductTypes.length;
     }
 
+    // Upsert Variants
     if (cloudVariants && cloudVariants.length > 0) {
       for (const item of cloudVariants) {
         await db.runAsync(
-          `INSERT INTO variants (
+          `INSERT INTO product_variants (
              variant_id, variant_product_type_id, variant_shop_id, variant_name, 
              variant_sku, variant_buying_price, variant_selling_price, 
-             variant_current_stock, variant_unit_measure, synced
-           ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 1)
+             variant_current_stock, variant_unit_measure, variant_is_active, synced
+           ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 1, 1)
            ON CONFLICT(variant_id) DO UPDATE SET
              variant_product_type_id = excluded.variant_product_type_id,
              variant_shop_id = excluded.variant_shop_id,
@@ -89,16 +87,19 @@ export async function downlinkInventory(
              variant_selling_price = excluded.variant_selling_price,
              variant_current_stock = excluded.variant_current_stock,
              variant_unit_measure = excluded.variant_unit_measure,
+             variant_is_active = 1,
              synced = 1;`,
-          item.variant_id,
-          item.variant_product_type_id,
-          item.variant_shop_id,
-          item.variant_name,
-          item.variant_sku || "",
-          Number(item.variant_buying_price),
-          Number(item.variant_selling_price),
-          Number(item.variant_current_stock),
-          item.variant_unit_measure || "Kgs"
+          [
+            item.variant_id,
+            item.variant_product_type_id,
+            item.variant_shop_id,
+            item.variant_name,
+            item.variant_sku || "",
+            Number(item.variant_buying_price),
+            Number(item.variant_selling_price),
+            Number(item.variant_current_stock),
+            item.variant_unit_measure || "Kgs"
+          ]
         );
       }
       downloadedCount += cloudVariants.length;

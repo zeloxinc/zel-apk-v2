@@ -10,6 +10,7 @@ import { BoringAvatar } from "@/components/boring-avatar";
 import Animated from "react-native-reanimated";
 import { Images } from "@/assets";
 import { Image } from "expo-image";
+import { supabase } from "@/lib/db/supabase";
 
 type Step = "code" | "confirm";
 
@@ -28,49 +29,107 @@ export function JoinShopScreen() {
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
 
+
+  
   async function handleJoin() {
-    if (code.length < 6) {
-      setError("Enter the full 6-digit code.");
-      return;
+      if (code.length < 6) {
+        setError("Enter the full 6-digit code.");
+        return;
+      }
+  
+      setIsLoading(true);
+      setError(null);
+  
+      try {
+        // 1. Look up the active invite code in Supabase
+        const { data: invite, error: inviteErr } = await supabase
+          .from("staff_invites")
+          .select(`
+            invite_id,
+            invite_shop_id,
+            expires_at,
+            shops (
+              shop_id,
+              shop_name
+            )
+          `)
+          .eq("invite_code", code.trim())
+          .eq("is_used", false)
+          .single();
+        
+        if (inviteErr || !invite) {
+          throw new Error("Invalid or expired invite code.");
+        }
+        
+        // 2. Check if expired
+        if (new Date(invite.expires_at) < new Date()) {
+          throw new Error("This invite code has expired.");
+        }
+        
+        // Safely handle shops whether typed as an array or object by Supabase
+        const targetShop = Array.isArray(invite.shops) ? invite.shops[0] : invite.shops;
+        
+        if (!targetShop) {
+          throw new Error("Associated shop details not found.");
+        }
+        
+        setShopInfo({
+          shopId: targetShop.shop_id,
+          shopName: targetShop.shop_name,
+          role: "Cashier", 
+        });
+        setStep("confirm");
+      } catch (err: any) {
+        setError(err.message || "Something went wrong.");
+      } finally {
+        setIsLoading(false);
+      }
     }
-
-    setIsLoading(true);
-    setError(null);
-
-    try {
-      // TODO(ndege): cheek staff invite codes 
-      await new Promise((resolve) => setTimeout(resolve, 500));
-
-      setShopInfo({
-        shopId: "placeholder-shop-id",
-        shopName: "Zelox Mart CBD",
-        role: "Cashier",
-      });
-      setStep("confirm");
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Something went wrong.");
-    } finally {
-      setIsLoading(false);
+  
+    async function handleConfirm() {
+      if (!shopInfo) return;
+  
+      setIsLoading(true);
+      setError(null);
+  
+      try {
+        const currentUser = supabase.auth.getUser(); // Or your auth hook
+        const userId = (await currentUser).data.user?.id;
+  
+        if (!userId) throw new Error("Not authenticated.");
+  
+        // 1. Get the 'Cashier' role ID from staff_roles lookup table
+        const { data: roleData, error: roleErr } = await supabase
+          .from("staff_roles")
+          .select("role_id")
+          .eq("role_name", "Cashier")
+          .single();
+  
+        if (roleErr || !roleData) throw new Error("Role configuration missing.");
+  
+        // 2. Insert into the staff table (linking profile to shop)
+        const { error: staffErr } = await supabase.from("staff").insert({
+          staff_shop_id: shopInfo.shopId,
+          staff_user_id: userId,
+          staff_role_id: roleData.role_id,
+          staff_is_active: true,
+        });
+  
+        if (staffErr) throw staffErr;
+  
+        // 3. Mark the invite code as used
+        await supabase
+          .from("staff_invites")
+          .update({ is_used: true })
+          .eq("invite_code", code.trim());
+  
+        router.push("/sales/pos");
+      } catch (err: any) {
+        setError(err.message || "Failed to join shop.");
+      } finally {
+        setIsLoading(false);
+      }
     }
-  }
-
-  async function handleConfirm() {
-    if (!shopInfo) return;
-
-    setIsLoading(true);
-    setError(null);
-
-    try {
-      // TODO(ndege): yeah just hookup the invote logic, codes can also be alphanumeric if you like 
-      await new Promise((resolve) => setTimeout(resolve, 500));
-
-      router.push("/sales/pos");
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Something went wrong.");
-    } finally {
-      setIsLoading(false);
-    }
-  }
 
   return (
     <AuthScrollView>

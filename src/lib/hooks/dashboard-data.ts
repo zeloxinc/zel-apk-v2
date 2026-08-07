@@ -147,24 +147,28 @@ export function useDashboardStats(
           [shopId, yesterday.startISO, yesterday.endISO]
         );
 
+        // Target normalized product_types table
         const products = await db.selectFirst<{ count: number }>(
-          `SELECT COUNT(DISTINCT variant_product_type_id) as count 
-           FROM variants 
-           WHERE variant_shop_id = ?`,
+          `SELECT COUNT(*) as count 
+           FROM product_types 
+           WHERE product_type_shop_id = ?`,
           [shopId]
         );
 
+        // Target normalized product_variants table
         const lowStock = await db.selectFirst<{ count: number }>(
           `SELECT COUNT(*) as count 
-           FROM variants 
+           FROM product_variants 
            WHERE variant_shop_id = ? AND variant_current_stock <= ?`,
           [shopId, LOW_STOCK_THRESHOLD]
         );
 
+        // Target normalized staff and staff_roles tables
         const cashiers = await db.selectFirst<{ count: number }>(
           `SELECT COUNT(*) as count 
-           FROM profiles 
-           WHERE shop_id = ? AND LOWER(role_name) LIKE '%cashier%'`,
+           FROM staff s
+           JOIN staff_roles sr ON s.staff_role_id = sr.role_id
+           WHERE s.staff_shop_id = ? AND LOWER(sr.role_name) LIKE '%cashier%' AND s.staff_is_active = 1`,
           [shopId]
         );
 
@@ -210,7 +214,7 @@ export function useLowStockItems(
           variant_unit_measure: string;
         }>(
           `SELECT variant_id, variant_name, variant_current_stock, variant_unit_measure 
-           FROM variants 
+           FROM product_variants 
            WHERE variant_shop_id = ? AND variant_current_stock <= ? 
            ORDER BY variant_current_stock ASC 
            LIMIT 6`,
@@ -262,9 +266,10 @@ export function useRecentActivity(
              r.receipt_id, 
              r.receipt_total_amount, 
              r.receipt_created_at, 
-             p.profile_full_name 
+             sp.profile_full_name 
            FROM sale_receipts r
-           LEFT JOIN profiles p ON r.receipt_staff_id = p.staff_id
+           LEFT JOIN staff s ON r.receipt_staff_id = s.staff_id
+           LEFT JOIN staff_profiles sp ON s.staff_user_id = sp.profile_user_id
            WHERE r.receipt_shop_id = ?
            ORDER BY r.receipt_created_at DESC
            LIMIT 5`,
@@ -371,7 +376,7 @@ export function useTopItems(
              SUM(si.sale_item_quantity * si.sale_item_unit_price) as total_revenue
            FROM sale_items si
            JOIN sale_receipts sr ON si.sale_item_receipt_id = sr.receipt_id
-           JOIN variants pv ON si.sale_item_variant_id = pv.variant_id
+           JOIN product_variants pv ON si.sale_item_variant_id = pv.variant_id
            WHERE sr.receipt_shop_id = ? AND sr.receipt_created_at >= ? AND sr.receipt_created_at < ?
            GROUP BY pv.variant_id, pv.variant_name
            ORDER BY total_qty DESC

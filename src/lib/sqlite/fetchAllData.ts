@@ -11,18 +11,19 @@ export async function seedLocalDatabase(
 ): Promise<string | null> {
   const db = dbInstance ?? (await getDatabase());
 
-  // 1. Clear local tables before seeding
+  // 1. Clear local tables before seeding (Using normalized tables)
   await db.execAsync(`
     DELETE FROM shops;
-    DELETE FROM profiles;
-    DELETE FROM products;
-    DELETE FROM variants;
+    DELETE FROM staff_profiles;
+    DELETE FROM staff;
+    DELETE FROM product_types;
+    DELETE FROM product_variants;
     DELETE FROM sale_receipts;
     DELETE FROM sale_items;
     DELETE FROM deletions_outbox;
   `);
 
-  // 2. Fetch staff profile
+  // 2. Fetch staff profile & staff mapping from Supabase
   const { data: profileData, error: profileError } = await supabase
     .from("staff_profiles")
     .select(`
@@ -31,6 +32,7 @@ export async function seedLocalDatabase(
       staff (
         staff_id,
         staff_shop_id,
+        staff_is_active,
         staff_roles (
           role_name
         )
@@ -43,7 +45,15 @@ export async function seedLocalDatabase(
   if (!profileError && profileData && profileData.length > 0) {
     const profile = profileData[0];
 
-    // Safely normalize staff to an array, filtering out null/undefined entries
+    // Insert into staff_profiles locally
+    await db.runAsync(
+      `INSERT INTO staff_profiles (profile_user_id, profile_full_name)
+       VALUES (?, ?)
+       ON CONFLICT(profile_user_id) DO UPDATE SET profile_full_name = excluded.profile_full_name;`,
+      profile.profile_user_id,
+      profile.profile_full_name
+    );
+
     const rawStaff = profile.staff;
     const staffList: any[] = Array.isArray(rawStaff)
       ? rawStaff.filter(Boolean)
@@ -55,27 +65,28 @@ export async function seedLocalDatabase(
       ? staffList.find((s: any) => s?.staff_shop_id === initialShopId) ?? staffList[0]
       : staffList[0];
 
-    const rawRoles = activeStaff?.staff_roles;
-    const resolvedRole: string = Array.isArray(rawRoles)
-      ? rawRoles[0]?.role_name
-      : (rawRoles as any)?.role_name ?? "Cashier";
-
     resolvedShopId = initialShopId ?? activeStaff?.staff_shop_id ?? null;
 
-    if (resolvedShopId) {
+    if (activeStaff) {
+      const rawRoles = activeStaff.staff_roles;
+      const resolvedRole: string = Array.isArray(rawRoles)
+        ? rawRoles[0]?.role_name
+        : (rawRoles as any)?.role_name ?? "Cashier";
+
+      // Insert into local staff table
       await db.runAsync(
-        `INSERT INTO profiles (profile_user_id, staff_id, profile_full_name, role_name, shop_id) 
+        `INSERT INTO staff (staff_id, staff_shop_id, staff_user_id, staff_role, staff_is_active)
          VALUES (?, ?, ?, ?, ?)
-         ON CONFLICT(profile_user_id) DO UPDATE SET
-           staff_id = excluded.staff_id,
-           profile_full_name = excluded.profile_full_name,
-           role_name = excluded.role_name,
-           shop_id = excluded.shop_id;`,
+         ON CONFLICT(staff_id) DO UPDATE SET
+           staff_shop_id = excluded.staff_shop_id,
+           staff_user_id = excluded.staff_user_id,
+           staff_role = excluded.staff_role,
+           staff_is_active = excluded.staff_is_active;`,
+        activeStaff.staff_id,
+        resolvedShopId,
         profile.profile_user_id,
-        activeStaff?.staff_id ?? "",
-        profile.profile_full_name,
         resolvedRole,
-        resolvedShopId
+        activeStaff.staff_is_active ?? true
       );
     }
   }
@@ -101,7 +112,7 @@ export async function seedLocalDatabase(
     );
   }
 
-  // 4. Fetch product types
+  // 4. Fetch product types (Corrected table & columns)
   const { data: productTypesData, error: prodError } = await supabase
     .from("product_types")
     .select("*")
@@ -111,11 +122,12 @@ export async function seedLocalDatabase(
     await db.withTransactionAsync(async () => {
       for (const pt of productTypesData) {
         await db.runAsync(
-          `INSERT INTO products (product_id, product_shop_id, product_name, synced) 
-           VALUES (?, ?, ?, 1)
-           ON CONFLICT(product_id) DO UPDATE SET
-             product_shop_id = excluded.product_shop_id,
-             product_name = excluded.product_name,
+          `INSERT INTO product_types (product_type_id, product_type_shop_id, product_type_name, product_type_is_active, synced) 
+           VALUES (?, ?, ?, 1, 1)
+           ON CONFLICT(product_type_id) DO UPDATE SET
+             product_type_shop_id = excluded.product_type_shop_id,
+             product_type_name = excluded.product_type_name,
+             product_type_is_active = 1,
              synced = 1;`,
           pt.product_type_id,
           pt.product_type_shop_id,
@@ -125,7 +137,7 @@ export async function seedLocalDatabase(
     });
   }
 
-  // 5. Fetch product variants
+  // 5. Fetch product variants (Corrected table target)
   const { data: variantData, error: variantError } = await supabase
     .from("product_variants")
     .select("*")
@@ -135,11 +147,11 @@ export async function seedLocalDatabase(
     await db.withTransactionAsync(async () => {
       for (const item of variantData) {
         await db.runAsync(
-          `INSERT INTO variants (
+          `INSERT INTO product_variants (
              variant_id, variant_product_type_id, variant_shop_id, variant_name, 
              variant_sku, variant_buying_price, variant_selling_price, 
-             variant_current_stock, variant_unit_measure, synced
-           ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 1)
+             variant_current_stock, variant_unit_measure, variant_is_active, synced
+           ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 1, 1)
            ON CONFLICT(variant_id) DO UPDATE SET
              variant_product_type_id = excluded.variant_product_type_id,
              variant_shop_id = excluded.variant_shop_id,
@@ -149,6 +161,7 @@ export async function seedLocalDatabase(
              variant_selling_price = excluded.variant_selling_price,
              variant_current_stock = excluded.variant_current_stock,
              variant_unit_measure = excluded.variant_unit_measure,
+             variant_is_active = 1,
              synced = 1;`,
           item.variant_id,
           item.variant_product_type_id,

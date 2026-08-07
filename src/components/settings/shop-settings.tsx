@@ -23,6 +23,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { Text } from "@/components/ui/text";
+import { supabase } from "@/lib/db/supabase";
+
 
 interface Shop {
   shop_id: string;
@@ -262,15 +264,36 @@ export function ShopSettings({ shopId, isOnline = true }: ShopSettingsProps) {
     }
   };
 
-  const handleGenerateInvite = () => {
-    if (!isOnline) return;
-    const code   = Math.floor(100000 + Math.random() * 900000).toString();
-    const expiry = new Date();
-    expiry.setHours(expiry.getHours() + 24);
-    setInviteCode(code);
-    setInviteExpiry(expiry.toISOString());
-  };
 
+  const handleGenerateInvite = async () => {
+      if (!isOnline || !activeShopId) return;
+      
+      // Generate 6-digit numeric (or alphanumeric) code
+      const code = Math.floor(100000 + Math.random() * 900000).toString();
+      const expiry = new Date();
+      expiry.setHours(expiry.getHours() + 24);
+  
+    try {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) return;
+        
+        // Assuming you have a supabase client initialized in your app
+        const { error } = await supabase.from("staff_invites").insert({
+          invite_shop_id: activeShopId,
+          invite_owner_id: user.id, // Grab from your auth session context
+          invite_code: code,
+          expires_at: expiry.toISOString(),
+        });
+  
+        if (error) throw error;
+  
+        setInviteCode(code);
+        setInviteExpiry(expiry.toISOString());
+      } catch (err) {
+        console.error("Failed to generate invite code:", err);
+      }
+    };
+  
   // 3. Deactivate Staff Member in SQLite
   const removeStaff = async (userId: string) => {
     if (!activeShopId) return;

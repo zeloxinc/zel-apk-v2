@@ -37,7 +37,7 @@ export function useSalesReceipts() {
     setError(null);
 
     try {
-      // 1. Fetch receipts with staff full names directly joined from profiles
+      // 1. Fetch receipts with staff names joined through normalized staff & staff_profiles tables
       const rawReceipts = await db.selectAll<RawReceiptRow>(`
         SELECT 
           r.receipt_id,
@@ -47,13 +47,14 @@ export function useSalesReceipts() {
           r.receipt_payment_method_id,
           r.receipt_created_at,
           r.synced,
-          COALESCE(p.profile_full_name, 'Cashier') AS staff_name
+          COALESCE(sp.profile_full_name, 'Cashier') AS staff_name
         FROM sale_receipts r
-        LEFT JOIN profiles p ON r.receipt_staff_id = p.staff_id
+        LEFT JOIN staff s ON r.receipt_staff_id = s.staff_id
+        LEFT JOIN staff_profiles sp ON s.staff_user_id = sp.profile_user_id
         ORDER BY r.receipt_created_at DESC;
       `);
 
-      // 2. Fetch all sale items with variant names attached
+      // 2. Fetch all sale items with variant names attached from product_variants
       const rawItems = await db.selectAll<RawItemRow>(`
         SELECT 
           i.sale_item_id,
@@ -63,7 +64,7 @@ export function useSalesReceipts() {
           i.sale_item_unit_price,
           COALESCE(v.variant_name, 'Unknown item') AS variant_name
         FROM sale_items i
-        LEFT JOIN variants v ON i.sale_item_variant_id = v.variant_id;
+        LEFT JOIN product_variants v ON i.sale_item_variant_id = v.variant_id;
       `);
 
       // 3. Map items to their corresponding receipt IDs

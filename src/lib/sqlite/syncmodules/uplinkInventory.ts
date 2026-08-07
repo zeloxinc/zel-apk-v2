@@ -1,6 +1,26 @@
 import * as SQLite from "expo-sqlite";
 import { SupabaseClient } from "@supabase/supabase-js";
-import { LocalDeletion, LocalProduct, LocalVariant } from "../db";
+import { LocalDeletion } from "../db";
+
+export interface LocalProductType {
+  product_type_id: string;
+  product_type_shop_id: string;
+  product_type_name: string;
+  synced: number;
+}
+
+export interface LocalProductVariant {
+  variant_id: string;
+  variant_product_type_id: string;
+  variant_shop_id: string;
+  variant_name: string;
+  variant_sku: string;
+  variant_buying_price: number;
+  variant_selling_price: number;
+  variant_current_stock: number;
+  variant_unit_measure: string;
+  synced: number;
+}
 
 export async function uplinkInventory(
   supabase: SupabaseClient, 
@@ -8,7 +28,7 @@ export async function uplinkInventory(
 ): Promise<number> {
   let count = 0;
 
-
+  // 1. Process deletions outbox
   const pendingDeletions = await db.getAllAsync<LocalDeletion>("SELECT * FROM deletions_outbox");
 
   for (const record of pendingDeletions) {
@@ -18,7 +38,7 @@ export async function uplinkInventory(
       .eq(record.column_name, record.id);
 
     if (!deleteError || deleteError.code === "PGRST116") {
-      await db.runAsync("DELETE FROM deletions_outbox WHERE id = ?", record.id);
+      await db.runAsync("DELETE FROM deletions_outbox WHERE id = ?", [record.id]);
       continue;
     }
 
@@ -35,7 +55,7 @@ export async function uplinkInventory(
         .eq(record.column_name, record.id);
 
       if (!updateError) {
-        await db.runAsync("DELETE FROM deletions_outbox WHERE id = ?", record.id);
+        await db.runAsync("DELETE FROM deletions_outbox WHERE id = ?", [record.id]);
       } else {
         console.error(`[Sync Soft-Delete Failed] Table: ${record.table_name}`, updateError);
       }
@@ -44,28 +64,30 @@ export async function uplinkInventory(
     }
   }
 
-  const unsyncedProducts = await db.getAllAsync<LocalProduct>(
-    "SELECT * FROM products WHERE synced = 0"
+  // 2. Upload unsynced product types
+  const unsyncedProducts = await db.getAllAsync<LocalProductType>(
+    "SELECT * FROM product_types WHERE synced = 0"
   );
   
   for (const prod of unsyncedProducts) {
     const { error } = await supabase
       .from("product_types")
       .upsert({
-        product_type_id: prod.product_id,
-        product_type_shop_id: prod.product_shop_id,
-        product_type_name: prod.product_name,
+        product_type_id: prod.product_type_id,
+        product_type_shop_id: prod.product_type_shop_id,
+        product_type_name: prod.product_type_name,
         product_type_is_active: true 
       }, { onConflict: 'product_type_id' });
 
     if (!error) {
-      await db.runAsync("UPDATE products SET synced = 1 WHERE product_id = ?", prod.product_id);
+      await db.runAsync("UPDATE product_types SET synced = 1 WHERE product_type_id = ?", [prod.product_type_id]);
       count++;
     }
   }
 
-  const unsyncedVariants = await db.getAllAsync<LocalVariant>(
-    "SELECT * FROM variants WHERE synced = 0"
+  // 3. Upload unsynced variants
+  const unsyncedVariants = await db.getAllAsync<LocalProductVariant>(
+    "SELECT * FROM product_variants WHERE synced = 0"
   );
 
   for (const variant of unsyncedVariants) {
@@ -85,7 +107,7 @@ export async function uplinkInventory(
       }, { onConflict: 'variant_id' });
 
     if (!error) {
-      await db.runAsync("UPDATE variants SET synced = 1 WHERE variant_id = ?", variant.variant_id);
+      await db.runAsync("UPDATE product_variants SET synced = 1 WHERE variant_id = ?", [variant.variant_id]);
       count++;
     }
   }

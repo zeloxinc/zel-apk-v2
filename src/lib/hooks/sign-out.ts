@@ -39,22 +39,36 @@ export async function signOut(
   }
 
   try {
+    // Temporarily disable foreign keys to safely purge all normalized local tables
+    await db.run("PRAGMA foreign_keys = OFF;");
+
     const tables = [
-      "shops",
-      "profiles",
-      "settings",
-      "products",
-      "variants",
-      "sale_receipts",
       "sale_items",
+      "sale_receipts",
+      "product_variants",
+      "product_types",
+      "categories",
+      "staff_invites",
+      "staff",
+      "staff_profiles",
+      "staff_roles",
+      "payment_methods",
+      "shops",
       "deletions_outbox",
     ];
 
     for (const table of tables) {
       await db.run(`DELETE FROM ${table};`);
     }
+
+    await db.run("PRAGMA foreign_keys = ON;");
     await db.run("VACUUM;");
   } catch (dbError) {
+    // Ensure foreign keys are re-enabled even if an error occurs
+    try {
+      await db.run("PRAGMA foreign_keys = ON;");
+    } catch {}
+
     console.error("SQLite database cache purge failed due to active engine locks:", dbError);
     throw new Error("DB_PURGE_PHASE_FAILED");
   }
