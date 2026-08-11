@@ -31,7 +31,6 @@ function AccordionItem({ section }: { section: SettingSection }) {
   const Icon = section.icon;
   const Component = section.component;
 
-  // Theme-resolved icon colors — no hardcoded hex
   const iconColor       = isDark ? "#a1a1aa" : "#71717a"; // zinc-400 / zinc-500
   const iconBg          = isDark ? "#27272a" : "#f4f4f5"; // zinc-800 / zinc-100
   const iconBorder      = isDark ? "#3f3f46" : "#e4e4e7"; // zinc-700 / zinc-200
@@ -59,7 +58,6 @@ function AccordionItem({ section }: { section: SettingSection }) {
         style={({ pressed }) => ({ opacity: pressed && Platform.OS === "ios" ? 0.7 : 1 })}
         className="flex-row items-center justify-between px-4 py-4"
       >
-        {/* Icon + Label */}
         <View className="flex-row items-center gap-3 flex-1">
           <View
             style={{ backgroundColor: iconBg, borderColor: iconBorder, borderWidth: 1 }}
@@ -72,13 +70,11 @@ function AccordionItem({ section }: { section: SettingSection }) {
           </Text>
         </View>
 
-        {/* Animated chevron — using the actual Lucide icon, no text glyph */}
         <Animated.View style={{ transform: [{ rotate: chevronRotate }] }}>
           <ChevronDown size={18} color={chevronColor} strokeWidth={2} />
         </Animated.View>
       </Pressable>
 
-      {/* ── Expanded content ── */}
       {expanded && (
         <>
           <Separator />
